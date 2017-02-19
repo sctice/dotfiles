@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# By default, we don't show single test failures. Pass -a as the first option
+# to this script in order to show all test failures.
+main() {
+  quit_at_1='/1 times/ { s/.*//; q }'
+  if [ "$1" = '-a' ]; then
+    quit_at_1=''
+  fi
+
+  results=$(< /var/log/i*t/testResults)
+  cleaned=$(sed -e "{ /^$/d; /^=/d; ${quit_at_1} }" <<<"$results")
+
+  if [ -z "$cleaned" ]; then
+    printf "\nNo failing tests\n\n"
+    exit
+  fi
+
+  filter_results "$1" <<<"$cleaned"
+}
+
+# Reformat the last batch of test results to match our preferences:
+#
+# - Put whitespace around different groups of N failures (1, 2, 3, ...)
+# - Indent and prefix each failing test with '-'
+#
+filter_results() {
+
+  read -r -d '' script <<-EOF
+	{
+	  s/^Tests.*/\n\0/; t done
+	  s/^/  - /
+	  \$ s/\$/\n/
+	  :done
+	}
+	EOF
+
+  sed -e "$script"
+}
+
+main "$@"
+
+# vim: sw=2 ts=2 sts=2 ft=sh

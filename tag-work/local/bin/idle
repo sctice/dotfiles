@@ -1,0 +1,51 @@
+#!/bin/env python
+
+import os
+import pwd
+import re
+
+from subprocess import Popen, PIPE
+
+
+def main():
+   # Get the sessions from the output of 'w' sorted by idle time ascending.
+   this_user = pwd.getpwuid(os.getuid())[0]
+   lines = Popen(["w", "-hs"], stdout=PIPE).communicate()[0].splitlines()
+   sessions = []
+   for line in lines:
+      fields = re.split(r"\s+", line)
+      user, idle = fields[0], str_to_seconds(fields[2])
+      if user == this_user:
+         continue
+      sessions.append((idle, line))
+   sessions.sort()
+   for idle, line in sessions:
+      print(filter_mosh(line))
+
+
+def str_to_seconds(time):
+   """Converts a time in the formats ##:##, ##.##s, ##:##m, or #days to
+   seconds, represented as a float with 1/100th second precision."""
+   expansions = [
+      (r"(\d{1,2}).(\d{2})s",     1,  0.01), # 23.23s
+      (r"(\d{1,2}):(\d{2})m",  3600, 60.00), # 5:23m
+      (r"(\d{1,2}):(\d{2})",     60,  1.00), # 12:09 (12 minutes, 9 seconds)
+      (r"(\d+)days",          86400,  0.00)  # 5days
+   ]
+   for (p, c1, c2) in expansions:
+      m = re.match(p, time)
+      if m:
+         t1 = int(m.group(1))
+         t2 = int(m.group(2)) if m.lastindex == 2 else 0
+         return c1*t1 + c2*t2
+   return float('inf')
+
+
+def filter_mosh(line):
+   """Shortens mosh_server process args, which otherwise wrap over several
+   lines of output, listing environment variables."""
+   return re.sub(r"(mosh-server(?:.(?!-l LANG))*).*", r"\1", line)
+
+
+if __name__ == '__main__':
+   main()

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# When the "airport" utility exists, symlink it to our local bin. We'd like to
+# do this only for the "home" tag, but rcm doesn't support per-tag hooks.
+airport_src="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+airport_dst="${HOME}/.local/bin/airport"
+if [ -e "$airport_src" ] && ! [ -e "$airport_dst" ]; then
+    ln -s "$airport_src" "$airport_dst"
+fi

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+LC_ALL=C tr -cd "${1-a-zA-Z0-9_-}" < /dev/urandom | head -c "${2-12}"
+echo

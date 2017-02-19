@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# An alias for grep, but available to xargs and friends.
+
+grep --color=auto -EHn "$@"

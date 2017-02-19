@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+# Just for the summary and help
+op = OptionParser.new do |opts|
+  opts.banner = <<-EOT
+Usage:
+  shuffle [FILE...]
+
+Description:
+  Concatenate the lines of the passed files and print them in shuffled order.
+  If no files are passed, then read from the standard input.
+  EOT
+end
+
+begin
+  op.parse!
+  puts ARGF.readlines.shuffle
+rescue OptionParser::InvalidOption => e
+  op.warn(e.message)
+  puts "", op.banner
+rescue SystemCallError => e
+  op.warn(e)
+rescue Interrupt
+  exit
+end

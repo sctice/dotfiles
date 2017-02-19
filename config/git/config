@@ -1,0 +1,25 @@
+[alias]
+	co = checkout
+	c = commit
+	st = status
+	b = branch
+	st = status -sb --ignore-submodules=dirty
+	ds = !git --no-pager diff --stat
+	conflicts = diff --name-only --diff-filter=U
+	clean-merged = !git-clean-merged
+	staged = diff --cached --stat
+
+[merge]
+	tool = vimdiff
+
+[push]
+	default = simple
+
+[rerere]
+	enabled = true
+
+[include]
+	path = local
+	path = parameters
+
+# vim: noexpandtab

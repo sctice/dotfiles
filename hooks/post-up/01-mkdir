@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Create directories we know we'll need (if they don't exist already).
+mkdir -p "${HOME}/.local/var"
+mkdir -p "${HOME}/.vim/bundle"

@@ -1,0 +1,3 @@
+" Work uses 3 spaces per tab, so respect that when editing a file in a
+" subdirectory of 'Code/' via scp://.
+autocmd! BufNewFile,BufRead scp://com/Code/* SetLocalTabbing 3

@@ -1,0 +1,6 @@
+# Autocomplete lowercase letters to uppercase
+set completion-ignore-case on
+
+# Make M-f and M-b move forward and backward over shell words (more like C-w).
+"\ef": shell-forward-word
+"\eb": shell-backward-word

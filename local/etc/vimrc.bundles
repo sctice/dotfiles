@@ -1,0 +1,34 @@
+" Required to be run directly from the command line, bypassing .vimrc
+if &compatible
+    set nocompatible
+end
+
+filetype off
+set rtp+=~/.vim/bundle/vundle/
+call vundle#begin()
+
+" Let Vundle manage Vundle
+Bundle 'gmarik/vundle'
+
+" Define bundles via Github repositories
+Bundle 'altercation/vim-colors-solarized'
+Bundle 'groenewege/vim-less'
+Bundle 'kien/ctrlp.vim'
+Bundle 'tpope/vim-fugitive'
+Bundle 'tpope/vim-repeat'
+Bundle 'tpope/vim-surround'
+Bundle 'tpope/vim-unimpaired'
+Bundle 'vim-ruby/vim-ruby'
+Bundle 'vim-scripts/buffergrep'
+Bundle 'vim-scripts/ctags.vim'
+Bundle 'vim-scripts/renamer.vim'
+Bundle 'vim-scripts/scratch.vim'
+Bundle 'vim-scripts/tComment'
+
+let s:local_bundles_path=expand("~/.local/etc/vimrc.bundles.local")
+if filereadable(s:local_bundles_path)
+  exec "source " . s:local_bundles_path
+endif
+
+call vundle#end()
+filetype plugin indent on

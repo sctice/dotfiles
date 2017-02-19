@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+"""
+Uses the mdfind utility to find files, then prompts the user to delete them one
+at a time, taking care to escape file paths and avoid trying to delete files
+belonging to directories that have already been deleted. For example:
+
+    $ sudo killitwithfire SomeRandomApp
+    5 files
+    delete /some/long/path with spaces/SomeRandomApp/prefs.plist
+    [y/N/q] ? y
+    delete /another/long/path with spaces/SomeRandomApp/prefs.bom
+    [y/N/q] ? q
+    quitting early
+
+This utility is intended to be used in order to wipe out anything related to an
+application, and will probably require administrator privileges in order to do
+that.
+"""
+
+import sys
+from subprocess import Popen, PIPE
+import re
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.stderr.write('usage: killitwithfire NAME\n')
+        sys.exit(1)
+    name = sys.argv[1]
+    mdfind_cmd = ['mdfind', '-name', name]
+    paths = list(Popen(mdfind_cmd, stdout=PIPE).stdout)
+    paths.sort()
+    last_path = None
+    print '{} files to delete'.format(len(paths))
+    for path in paths:
+        path = path.strip()
+        if last_path is not None and path.startswith(last_path):
+            print 'already deleted: {}'.format(path)
+            continue
+        print 'Delete {}'.format(path)
+        action = raw_input('[y/N/q] ? ')
+        if re.match(r'y(e(s|p))?', action):
+            rm_path(path)
+            last_path = path + '/'
+        elif re.match(r'q(uit)?', action):
+            print 'quitting early'
+            sys.exit(0)
+
+
+def rm_path(path):
+    rm_cmd = ['rm', '-rf', path]
+    status = Popen(rm_cmd).wait()
+    if status != 0:
+        sys.exit(2)
+
+
+if __name__ == '__main__':
+    main()

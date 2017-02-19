@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'open3'
+
+Options = Struct.new(:limit, :flist_args, :query)
+
+def main
+  begin
+    options = parse_options
+    flist_cmd = ['flist'] + options.flist_args
+    pmatch_cmd = ['pmatch']
+    pmatch_cmd += ['--limit', options.limit] if !options.limit.nil?
+    pmatch_cmd << options.query
+    Open3.pipeline(flist_cmd, pmatch_cmd)
+  rescue Interrupt
+  end
+end
+
+def parse_options
+  options = Options.new
+  options.limit = nil
+  options.flist_args = []
+
+  op = OptionParser.new do |opts|
+    opts.banner = "usage: #{opts.program_name} [-l N] [FLIST_ARGS...] QUERY"
+
+    opts.separator ''
+    opts.separator 'options:'
+
+    opts.on('-l', '--limit N', Integer,
+            'Limit to N matches.') do |n|
+      options.limit = n.to_s
+    end
+
+    opts.on('-h', '--help',
+            'Print this help.') do
+      puts opts
+      exit
+    end
+  end
+
+  args = []
+  begin
+    op.order! {|r| args << r}
+  rescue OptionParser::InvalidOption => e
+    e.recover(ARGV)
+  rescue OptionParser::ParseError => e
+    abort "#{e}\n#{op.banner}"
+  end
+  args += ARGV
+
+  abort "missing mandatory QUERY argument\n#{op.banner}" if args.length < 1
+
+  options.query = args.pop
+  options.flist_args = args if args.length > 0
+  options
+end
+
+main if __FILE__ == $PROGRAM_NAME

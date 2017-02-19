@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+# Deletes branches that have been merged, as identified by `git branch
+# --merged master`. This is an elaboration on the following command:
+#
+# git branch --merged | grep -v '^*' | xargs -n 1 git branch -d
+#
+# The main improvements are a little extra feedback if you try to delete either
+# the branch you're on or master, or if you try this while outside a git
+# repository.
+
+SKIP = /^(?:\*.*|master)$/
+
+def main(argv)
+  into = argv.first || 'master'
+  git_branch_out = %x{git branch --merged #{into}}
+
+  unless $?.success?
+     print git_branch_out
+     exit $?.exitstatus
+  end
+
+  git_branch_out.each_line do |branch|
+     branch.strip!
+     if SKIP.match(branch)
+        puts "Skipping #{branch}"
+        next
+     end
+     print %x{git branch -d #{branch}}
+  end
+end
+
+main(ARGV) if __FILE__ == $PROGRAM_NAME

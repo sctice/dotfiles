@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+p = 0.01
+op = OptionParser.new do |opts|
+  opts.banner = <<-EOT
+Usage:
+  sample [-p PROB] [FILE...]
+
+Description:
+  Concatenate the lines of the passed files and print each one with a certain
+  probability (default 0.01).
+  EOT
+
+  opts.separator ""
+  opts.separator "Options:"
+
+  opts.on("-p", "--probability PROB", Float,
+          "Print each line with probability PROB") do |prob|
+    p = prob
+  end
+end
+
+begin
+  op.parse!
+  ARGF.each { |l| puts l if rand() < p }
+rescue OptionParser::InvalidOption => e
+  op.warn(e)
+  puts "", op.banner
+rescue SystemCallError => e
+  op.warn(e)
+rescue Interrupt
+  exit
+end

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+read -r -d '' PARAMS_DEFAULT <<'EOT'
+# This file was created automatically, but it will not be overwritten.
+#
+# This is the place to put any configuration that is relevant to this
+# particular machine and that shouldn't be under source control.
+
+[user]
+#	name =
+#	email =
+
+[github]
+#	user =
+#	token =
+
+# vim: noexpandtab
+EOT
+
+function write_git_parameters() {
+  local params_path="${HOME}/.config/git/parameters"
+
+  if [ -e "$params_path" ]; then
+    return
+  fi
+
+  echo "$PARAMS_DEFAULT" > "$params_path"
+  echo "Wrote ${params_path}"
+  echo "Edit to specify machine-specific git configuration"
+}
+
+write_git_parameters

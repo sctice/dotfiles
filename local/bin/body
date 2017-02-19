@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# Pipe the first line (optionally more) from STDIN to STDERR, and pass the rest
+# through. Useful for filtering header lines out of pipelines.
+#
+# For example, to filter `ps aux` for instances of 'vim' while keeping the
+# header that 'ps' writes to STDOUT:
+#
+#    $ ps aux | body | grep vim
+
+num_lines=${1:-1}
+for (( i=0; i < $num_lines; i++ )); do
+    IFS= read -r line
+    echo "$line" >&2
+done
+
+tail -n "+${num_lines}"

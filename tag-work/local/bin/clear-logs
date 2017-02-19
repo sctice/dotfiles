@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+cd "${HOME}/Code/Logs" \
+  && > debug.log \
+  && > error.log \
+  && rm -rf Tests/*

@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+# Print out processes that have performed network I/O (via netstat) in a table
+# with user, per-process bytes sent/received, and any open connections (via
+# lsof).
+#
+# This depends on the FreeBSD (i.e., OS X) netstat, and perhaps lsof as well.
+# It definitely doesn't work on Red Hat. Requires root.
+
+import subprocess as sp
+import re
+from operator import itemgetter
+
+
+def main():
+    output = list()
+    for port, rxbytes, txbytes in netstat():
+        try:
+            cmd, pid, user, name = lsof(port)
+        except sp.CalledProcessError:
+            continue
+        output.append([cmd, pid, user, rxbytes, txbytes, name])
+    output.sort(key=lambda l: (l[0], int(l[3]) + int(l[4])))
+    output.reverse()
+    output.insert(0, ('CMD', 'PID', 'USER', 'RXBYTES', 'TXBYTES', 'NAME'))
+    print table(output),
+
+
+def netstat():
+    ns_out = sp.check_output('netstat -p tcp -b', shell=True)
+    ns_out = ns_out.splitlines()[2:]
+    out = list()
+    for line in ns_out:
+        port, rxb, txb = itemgetter(3, 6, 7)(re.split(r'\s+', line))
+        port = re.search(r'\.(\d+)$', port).group(1)
+        out.append([port, rxb, txb])
+    return out
+
+
+def lsof(port):
+    lsof_out = sp.check_output('sudo lsof -i :{}'.format(port), shell=True)
+    lsof_out = lsof_out.splitlines()[1]
+    cmd, pid, user, name = itemgetter(0, 1, 2, 8)(re.split(r'\s+', lsof_out))
+    return [cmd, pid, user, name]
+
+
+def table(lines):
+    p = sp.Popen('column -t', shell=True, stdin=sp.PIPE, stdout=sp.PIPE,
+                 close_fds=True)
+    p.stdin.write('\n'.join(' '.join(l) for l in lines) + '\n')
+    p.stdin.close()
+    return p.stdout.read()
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,45 @@
+# Source system definitions. These aren't sourced automatically by bash,
+# whether the session is interactive or not.
+if [ -f /etc/bashrc ]; then
+  source /etc/bashrc >/dev/null
+fi
+
+# Exports
+
+# We need to re-export some things that we defined in our common bashrc which
+# the systemrc then overwrote.
+
+export PATH=$(unique_pathlist "${HOME}/.local/bin:${PATH}")
+export PS1="$MY_PS1"
+export PS2="$MY_PS2"
+export EDITOR=$(which vim)
+
+# Code dir
+export MY_CODE_DIR="${HOME}/Code/"
+
+# Directories to exclude from find-utils results
+export SQUELCH="vendor:node_modules:3P:Deprecated:Wordpress:Locale:Migrations"
+
+# Host for web-driver phpunit tests
+export host=amazon
+
+# Python path
+export PYTHONPATH="${HOME}/.python"
+
+# Aliases
+
+# Human sizes, coloring, display directories first
+alias ls='ls -h --color=auto --group-directories-first'
+
+alias cdc='cd ~/Code/'
+
+alias cl='clear-logs'
+
+# Replace path with one suitable for opening via scp in remote vim. The remote
+# path is made absolute.
+fr() {
+  d=$(pwd | sed -e 's/[\/&]/\\&/g')
+  ff "$@" | sed -r "s/^\.?\/?/scp:\/\/com\/${d}\//"
+}
+
+# vim: sw=2 ts=2 sts=2 ft=sh

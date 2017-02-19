@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Run jsl over the JS file passed in as the first argument ($1). The JS file is
+# pre-processed to replace all instances of PHP (<? ... ?>) with an equivalent
+# number of spaces, so that jsl doesn't report false positives from the escaped
+# code. Because jsl expects a path rather than a stream on stdin, the
+# preprocessed JS is stored in a temporary file, and that's the path passed
+# into jsl. The errors reported by jsl are post-processed to replace the
+# temporary file name with the actual file name. The post-processing also
+# rearranges the line numbers so that they can be parsed by the fileline vim
+# plugin.
+
+main() {
+  local jsfile="$1"
+  local tmpfile=$(preprocess "$jsfile")
+
+  # Run the processed temporary file through jsl, and then replace the
+  # temporary file name in any errors with the original file name.
+  jsl \
+    -nologo \
+    -nofilelisting \
+    -nosummary \
+    -nocontext \
+    -conf ~/.jsl.conf \
+    -process "$tmpfile" \
+    | postprocess "$tmpfile" "$jsfile"
+
+  rm "$tmpfile"
+}
+
+# Write original file to a temporary file, replacing any <?...?> with a
+# bogus function call.
+preprocess() {
+  local jsfile="$1"
+  local tmpfile=$(mktemp /tmp/jslint.XXXXXXXXXX)
+
+  perl -wple 's#(<\?([^?]|\?(?!>))*\?>)#window.X()#g' \
+    "$jsfile" > "$tmpfile"
+
+  echo "$tmpfile"
+}
+
+# Replace the temporary file name with the new file name and write line numbers
+# so that they're conveniently parsed by the fileline vim plugin.
+postprocess() {
+  local tmpfile="$1"
+  local jsfile="$2"
+
+  perl -wple "s#^.*?\Q${tmpfile}\E\((\d+)\):#${jsfile}:\$1#g"
+}
+
+main "$@"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Thanks to http://unix.stackexchange.com/questions/22615
+dig +short myip.opendns.com @resolver1.opendns.com

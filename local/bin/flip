@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+# Flip text like (╯°□°)╯ flips tables.
+# E.g. `flip -n peanut butter | pbcopy` copies "ɹǝʇʇnq ʇnuɐǝd"
+
+require 'optparse'
+
+FLIPPED = {
+  'a' => 'ɐ', 'b' => 'q', 'c' => 'ɔ', 'd' => 'p', 'e' => 'ǝ', 'f' => 'ɟ',
+  'g' => 'ƃ', 'h' => 'ɥ', 'i' => 'ᴉ', 'j' => 'ɾ', 'k' => 'ʞ', 'l' => 'l',
+  'm' => 'ɯ', 'n' => 'u', 'o' => 'o', 'p' => 'd', 'q' => 'b', 'r' => 'ɹ',
+  's' => 's', 't' => 'ʇ', 'u' => 'n', 'v' => 'ʌ', 'w' => 'ʍ', 'x' => 'x',
+  'y' => 'ʎ', 'z' => 'z', '0' => '0', '1' => 'Ɩ', '2' => 'ᄅ', '3' => 'Ɛ',
+  '4' => 'ㄣ', '5' => 'ϛ', '6' => '9', '7' => 'ㄥ', '8' => '8', '9' => '6',
+  'A' => '∀', 'B' => 'q', 'C' => 'Ɔ', 'D' => 'p', 'E' => 'Ǝ', 'F' => 'Ⅎ',
+  'G' => 'פ', 'H' => 'H', 'I' => 'I', 'J' => 'ſ', 'K' => 'ʞ', 'L' => '˥',
+  'M' => 'W', 'N' => 'N', 'O' => 'O', 'P' => 'Ԁ', 'Q' => 'Q', 'R' => 'ɹ',
+  'S' => 'S', 'T' => '┴', 'U' => '∩', 'V' => 'Λ', 'W' => 'M', 'X' => 'X',
+  'Y' => '⅄', 'Z' => 'Z', '`' => ',', '~' => '~', '1' => 'Ɩ', '&' => '⅋',
+  '(' => ')', ')' => '(', '[' => ']', ']' => '[', '{' => '}', '}' => '{',
+  '"' => ',,', "'" => ',', '?' => '¿', '.' => '˙', ',' => "'", '<' => '>',
+  '>' => '<',
+}
+
+Options = Struct.new(:no_newline, :no_reverse)
+options = Options.new
+options.no_newline = false
+options.no_reverse = false
+
+op = OptionParser.new do |opts|
+  opts.banner = "usage: #{opts.program_name} [-nR] TEXT..."
+  opts.separator ''
+  opts.separator 'options:'
+
+  opts.on('-n',
+          'Do not print trailing newline') do
+    options.no_newline = true
+  end
+
+  opts.on('-R', '--no-reverse',
+          'Do not reverse the text when flipping') do
+    options.no_reverse = true
+  end
+end
+
+begin
+  op.parse!
+rescue OptionParser::InvalidOption => e
+  $stderr.puts e, op.banner
+  exit 1
+end
+
+words = ARGV.map do |word|
+  word.chars.map {|c| FLIPPED.fetch(c, c)}.join
+end
+
+out = words.join(' ')
+out.reverse! unless options.no_reverse
+out << "\n" unless options.no_newline
+
+print out

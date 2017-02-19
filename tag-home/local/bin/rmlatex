@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+all=""
+while getopts "a" option; do
+   case $option in
+      a) all="1";;
+   esac
+done
+
+if [ ! -z "${all}" ]; then
+   rm -f *.{aux,log,pdf}
+else
+   rm -f *.{aux,log}
+fi

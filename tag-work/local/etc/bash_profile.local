@@ -1,0 +1,11 @@
+# See the common bash_profile for an explanation of the differences between
+# bash_profile and bashrc, and what should go where.
+
+# Print some basic server statistics (remove whitespace from the beginning of
+# the output of uptime).
+echo; uptime | sed -e 's/^ *//'
+
+# Print out a summary of failing tests (more than one failure).
+failing-tests
+
+# vim: sw=2 ts=2 sts=2 ft=sh

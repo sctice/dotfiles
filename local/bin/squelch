@@ -1,0 +1,142 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'pathname'
+require 'set'
+require 'open3'
+
+Options = Struct.new(:operation, :style, :hidden, :squelch)
+
+def main
+  options = Options.new
+  options.operation = :filter
+  options.style = nil
+  options.hidden = false
+
+  op = OptionParser.new do |opts|
+    opts.banner = "usage: #{opts.program_name} [-l | -r | -g] [-a]"
+
+    opts.separator ''
+    opts.separator 'options:'
+
+    opts.on('-l', '--list',
+            'List squelch patterns as globs.') do
+      options.operation = :list
+      options.style = :as_glob
+    end
+
+    opts.on('-r', '--list-regex',
+            'List squelch patterns as regular expressions.') do
+      options.operation = :list
+      options.style = :as_find_pattern
+    end
+
+    opts.on('-g', '--list-git',
+            'List squelch patterns as git pathspecs.') do
+      options.operation = :list
+      options.style = :as_git
+    end
+
+    opts.on('-a', '--hidden',
+            'Do not squelch hidden files.') do
+      options.hidden = true
+    end
+
+    opts.on('-h', '--help',
+            'Print this help.') do
+      puts opts
+      exit
+    end
+  end
+
+  begin
+    op.parse!
+    squelch_set = build_squelch_set(options)
+    send options.operation, squelch_set, options
+  rescue OptionParser::ParseError => e
+    warn e
+    exit 1
+  rescue Interrupt
+  end
+end
+
+def filter(squelch_set, options)
+  s = File::SEPARATOR
+  patterns = squelch_set.collect {|sp| as_grep_pattern(sp)}.join('|')
+  re = "^[^:]*(^|#{s})(#{patterns})([:#{s}]|$)"
+  Open3.pipeline(['grep', '-vE', re])
+end
+
+def list(squelch_set, options)
+  squelch_set.each do |squelch_pattern|
+    puts send(options.style, squelch_pattern)
+  end
+end
+
+def build_squelch_set(options)
+  return [] if ENV.key?('NOSQUELCH')
+  squelch_set = Set.new
+  squelch_set << '.?*' unless options.hidden
+  squelch_set.merge ENV.fetch('SQUELCH', '').split(':').select {|s| s != ''}
+  next_d = Pathname.new(Dir.pwd)
+  begin
+    d = next_d
+    next_d = d.parent
+    fp = d.join('.squelch')
+    next unless fp.readable?
+    fp.each_line do |l|
+      l.chomp!
+      squelch_set << l unless l == '' || l[0] == '#'
+    end
+  end until d.root?
+  squelch_set
+end
+
+def as_glob(glob)
+  glob
+end
+
+def as_grep_pattern(glob)
+  s = File::SEPARATOR
+  as_pattern(glob, "[^#{s}]?", "[^#{s}]")
+end
+
+def as_find_pattern(glob)
+  as_pattern(glob, "?", "*")
+end
+
+def as_pattern(glob, qmark, star)
+  i, n = 0, glob.length
+  re = []
+  while i < n
+    c = glob[i]
+    i += 1
+    if c == '?'
+      re << "#{qmark}"
+    elsif c == '*'
+      re << "#{star}"
+    elsif c == '['
+      j = i
+      j += 1 if j < n && glob[j] == '^'
+      j += 1 if j < n && glob[j] == ']'
+      j = glob.index(']') || n
+      if j >= n
+        re << '\\['
+      else
+        stuff = glob[i...j].gsub('\\', '\\\\')
+        i = j + 1
+        re << "[#{stuff}]"
+      end
+    else
+      re << Regexp.escape(c)
+    end
+  end
+  re.join
+end
+
+def as_git(glob)
+  s = File::SEPARATOR
+  return ":(exclude,glob)**#{s}#{glob}#{s}**"
+end
+
+main if __FILE__ == $PROGRAM_NAME

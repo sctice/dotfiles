@@ -1,0 +1,2 @@
+# Human sizes, coloring, display directories first
+alias ls='ls -h --color=auto --group-directories-first'
