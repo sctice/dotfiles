@@ -3,7 +3,9 @@
 	c = commit
 	st = status
 	b = branch
+	sm = submodule
 	st = status -sb --ignore-submodules=dirty
+	dc = diff --cached
 	ds = !git --no-pager diff --stat
 	conflicts = diff --name-only --diff-filter=U
 	clean-merged = !git-clean-merged
