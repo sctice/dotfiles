@@ -65,7 +65,8 @@ export LESS='-R -F -X -+S'
 
 # Aliases
 
-alias ll='ls -l'
+# Display link targets instead of links. Add -P to override.
+alias ll='ls -lL'
 
 # When inside a tmux session, SSH needs to explicitly override the TERM
 # environment variable from screen-256color to something that remote servers
