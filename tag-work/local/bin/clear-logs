@@ -3,4 +3,6 @@
 cd "${HOME}/Code/Logs" \
   && > debug.log \
   && > error.log \
+  && > me.log \
+  && > spam.log \
   && rm -rf Tests/*
