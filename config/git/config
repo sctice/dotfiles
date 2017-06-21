@@ -10,6 +10,7 @@
 	conflicts = diff --name-only --diff-filter=U
 	clean-merged = !git-clean-merged
 	staged = diff --cached --stat
+	log1 = log --pretty='%C(auto)%h%Creset %<(12,trunc)%aN %s'
 
 [merge]
 	tool = vimdiff
