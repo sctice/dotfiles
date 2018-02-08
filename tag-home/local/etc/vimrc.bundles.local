@@ -1,5 +1,6 @@
 Bundle 'vim-scripts/a.vim'
 Bundle 'wting/rust.vim'
 Bundle 'pangloss/vim-javascript'
+Bundle 'mxw/vim-jsx'
 Bundle 'lumiliet/vim-twig'
 Bundle 'embear/vim-localvimrc'
