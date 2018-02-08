@@ -11,6 +11,7 @@
 	clean-merged = !git-clean-merged
 	staged = diff --cached --stat
 	log1 = log --pretty='%C(auto)%h%Creset %<(12,trunc)%aN %s'
+	logme = log --author=Shawn --pretty='%C(auto)%h%Creset %<(12,trunc)%ai %s'
 
 [diff]
 	noprefix = true
