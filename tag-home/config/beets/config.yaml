@@ -1,0 +1,3 @@
+directory: ~/Music/Beets
+library: ~/Music/Beets/library.db
+plugins: [fetchart, embedart, duplicates]
