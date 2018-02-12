@@ -3,7 +3,3 @@ set completion-ignore-case on
 
 # Tab-completion adds slash to dir symlinks
 set mark-symlinked-directories on
-
-# Make M-f and M-b move forward and backward over shell words (more like C-w).
-"\ef": shell-forward-word
-"\eb": shell-backward-word
