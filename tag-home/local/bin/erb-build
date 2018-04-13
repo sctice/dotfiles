@@ -1,0 +1,163 @@
+#!/usr/bin/env ruby
+
+# Compiles a directory containing a root ERB-formatted template into an output
+# file under the input directory. By default, the root file is called
+# `template.html` and the output file is called `index.html`. The template may
+# include other files under the input directory with `file('path/to/file')`.
+#
+# Given a directory tree like:
+#
+#   query-optimization/
+#   ├── presentation.md
+#   ├── remark.min.js
+#   └── template.html
+#
+# `erb-build query-optimization` generates (by default)
+# `query-optimization/index.html` from `template.html`, which includes
+# `presentation.md` and `remark.min.js`.
+#
+# If you have `fswatch` installed, `remark -w <DIR>` watches the directory for
+# changes and rebuilds as necessary.
+
+require 'erb'
+require 'open3'
+require 'optparse'
+require 'pathname'
+
+module BuildErbDir
+  Options = Struct.new(:dirs, :root, :outfile, :watch)
+
+  def self.run
+    begin
+      options = parse_options
+      if options.watch
+        watch(options)
+      else
+        build(options)
+      end
+    rescue NotADir, NotReadable => e
+      puts e
+    rescue Interrupt
+    end
+  end
+
+  def self.parse_options
+    parsed = Options.new
+    parsed.dirs = []
+    parsed.root = 'template.html'
+    parsed.outfile = 'index.html'
+    parsed.watch = false
+
+    op = OptionParser.new do |opts|
+      opts.banner = "usage: #{opts.program_name} DIR..."
+
+      opts.separator ''
+      opts.separator 'options:'
+
+      opts.on('-w', '--watch', 'Watch for changes and rebuild') do |w|
+        parsed.watch = w
+      end
+
+      opts.on('-rFILE', '--root=FILE', 'Start rendering from FILE') do |f|
+        parsed.root = f
+      end
+
+      opts.on('-oFILE', '--out=FILE', 'Write output to FILE') do |f|
+        parsed.outfile = f
+      end
+
+      opts.on('-h', '--help', 'Print this help') do
+        puts opts
+        exit
+      end
+    end
+
+    begin
+      op.parse!
+    rescue OptionParser::InvalidOption => e
+      e.recover(ARGV)
+    rescue OptionParser::ParseError => e
+      abort "#{e}\n#{op.banner}"
+    end
+
+    if ARGV.length < 1
+      puts "#{op.program_name}: requires at least 1 directory argument"
+      puts op
+      exit
+    end
+
+    parsed.dirs = ARGV.dup.map {|d| File.realpath(d, Dir.pwd)}
+    parsed
+  end
+
+  def self.build(opts)
+    opts.dirs.each {|dir| ErbDir.build(dir, opts) }
+  end
+
+  def self.watch(opts)
+    watch = [
+      'fswatch', '-E',
+      '--exclude', '.*',
+      '--include', '.*\.(html|js|css|txt|md|erb)$',
+    ] + opts.dirs
+
+    Open3.popen2(*watch) do |i, o, t|
+      o.each_line do |modified|
+        m_path = File.realpath(modified.chomp)
+        m_dir = opts.dirs.find {|p| m_path[0, p.length + 1] == "#{p}/"}
+        if m_dir && m_path != File.join(m_dir, opts.outfile)
+          puts "Rebuilding #{m_dir}…"
+          ErbDir.build(m_dir, opts)
+        end
+      end
+    end
+  end
+
+  class ErbDir
+    def self.build(dir, opts)
+      raise NotADir.new(dir) if !File.directory?(dir)
+      ErbDir.new(dir).build(opts)
+    end
+
+    def initialize(dir)
+      @dir = dir
+    end
+
+    def build(opts)
+      template = file(opts.root)
+      out_path = path(opts.outfile)
+      output = ERB.new(template).result(binding)
+      out_path.write(output)
+    end
+
+    def file(path_str)
+      req_path(path_str).read
+    end
+
+    private
+
+    def req_path(path_str)
+      pathname = path(path_str)
+      raise NotReadable.new(path_str) if !pathname.readable?
+      pathname
+    end
+
+    def path(path_str)
+      Pathname.new(File.join(@dir, path_str))
+    end
+  end
+
+  class NotADir < Exception
+    def initialize(dir)
+      super("not a directory: #{dir}")
+    end
+  end
+
+  class NotReadable < Exception
+    def initialize(pathname)
+      super("not readable: #{pathname}")
+    end
+  end
+end
+
+BuildErbDir.run if __FILE__ == $PROGRAM_NAME
