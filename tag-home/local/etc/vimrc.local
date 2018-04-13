@@ -1,3 +1,7 @@
 " Work uses 3 spaces per tab, so respect that when editing a file in a
 " subdirectory of 'Code/' via scp://.
 autocmd! BufNewFile,BufRead scp://com/Code/* SetLocalTabbing 3
+
+" Work around https://github.com/vim/vim/issues/2329 to allow writing netrw
+" buffers.
+autocmd! BufRead,BufWritePost scp://* :set buftype=acwrite
