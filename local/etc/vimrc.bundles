@@ -12,6 +12,7 @@ Bundle 'gmarik/vundle'
 
 " Define bundles via Github repositories
 Bundle 'altercation/vim-colors-solarized'
+Bundle 'danilo-augusto/vim-afterglow'
 Bundle 'groenewege/vim-less'
 Bundle 'kien/ctrlp.vim'
 Bundle 'tpope/tpope-vim-abolish'
