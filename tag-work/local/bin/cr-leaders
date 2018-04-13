@@ -1,0 +1,108 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types = 1);
+
+require 'Exec/essentials.php';
+require 'Libs/ExecLib.php';
+
+$doc = <<<EOT
+Usage: cr-leaders
+
+Displays a table of developer CRs over this week and the preceding 3 weeks
+sorted by CR count descending.
+
+Options:
+   -h --help  Show this screen.
+EOT;
+
+function main(): void {
+   global $doc;
+   $args = Docopt::handle($doc);
+   $weekNames = ['-3 WEEKS', '-2 WEEKS', '-1 WEEK', 'THIS WEEK'];
+
+   $weeks = fetchStats($weekNames);
+   $table = padWeeks($weeks);
+   display($weekNames, $table);
+}
+
+function fetchStats(array $weekNames): array {
+   $n = count($weekNames) - 1;
+   $query = <<<EOT
+      SELECT
+         FROM_UNIXTIME(ps.`date`, '%Y-%u') AS 'week',
+         CONCAT_WS(' ',
+            SUBSTRING(e.`first_name`, 1, 14),
+            SUBSTRING(e.`last_name`, 1, 1)
+         ) AS 'developer',
+         COUNT(DISTINCT ps.`number`) AS 'n'
+      FROM `pull_signatures` ps
+      JOIN `ifixit_cart`.`employees` e ON (ps.`user` = e.`github_username`)
+      WHERE
+         ps.`type` = 'CR'
+         AND ps.`date` >= UNIX_TIMESTAMP(NOW() - INTERVAL {$n} WEEK)
+      GROUP BY `week`, ps.`user`
+      ORDER BY `week` ASC, `n` DESC, `developer` ASC;
+EOT;
+
+   $ip = exec('dig +short slave.ifixit.com');
+   $escapedQuery = escapeshellarg($query);
+   $cmd = escapeshellarg("mysql -s -e {$escapedQuery} metrics");
+   $sshCmd = "ssh -i /var/ifixit/aws/id_rsa-gsg-keypair root@{$ip} {$cmd}";
+   exec($sshCmd, $lines);
+
+   $byWeek = array_reduce($weekNames, function($carry, $timeStr) {
+      $weekName = strftime('%Y-%V', strtotime($timeStr));
+      $carry[$weekName] = [];
+      return $carry;
+   }, []);
+
+   foreach ($lines as $line) {
+      [$week, $user, $n] = explode("\t", $line);
+      $byWeek[$week][] = ['user' => $user, 'n' => (int)$n];
+   }
+
+   return $byWeek;
+}
+
+function padWeeks(array $weeks): array {
+   $n = max(array_map('count', $weeks));
+   return array_map(function($group) use ($n) {
+      return array_pad($group, $n, ['user' => '<empty>', 'n' => 0]);
+   }, $weeks);
+}
+
+function display(array $weekNames, array $weeks): void {
+   $cols = array_map('formatColumn', $weeks);
+   $rows = joinColumns($cols);
+   echo formatHeader($weekNames), "\n";
+   foreach ($rows as $row) {
+      echo "{$row}\n";
+   }
+}
+
+function formatHeader(array $weekNames): string {
+   return head(joinColumns(array_map(function($weekName) {
+      return [sprintf("%19s", $weekName)];
+   }, $weekNames)));
+}
+
+function formatColumn(array $week): array {
+   return array_map(function($row) {
+      return sprintf("%16s %2d", $row['user'], $row['n']);
+   }, $week);
+}
+
+function joinColumns(array $columns): array {
+   $rows = [];
+   foreach ($columns as $column) {
+      $i = 0;
+      foreach ($column as $row) {
+         $rows[$i++][] = $row;
+      }
+   }
+   return array_map(function($row) {
+      return implode(' ', $row);
+   }, $rows);
+}
+
+main();
