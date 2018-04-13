@@ -5,7 +5,7 @@
 # the output of uptime).
 echo; uptime | sed -e 's/^ *//'
 
-# Print out a summary of failing tests (more than one failure).
-failing-tests
+# Print out a summary of CR leaders over the past few weeks
+echo -e "\nCR Leaders\n"; cr-leaders | head -n7; echo
 
 # vim: sw=2 ts=2 sts=2 ft=sh

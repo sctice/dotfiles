@@ -45,7 +45,7 @@ set formatoptions+=croq2lj
 set formatoptions-=t
 
 " Display tabs and trailing spaces (requires UTF-8).
-set list listchars=tab:»\ ,trail:\ 
+set list listchars=tab:»\ ,trail:·
 
 " Patterns to ignore when tab-completing.
 set wildignore+=*.o,*.d,*.pyc,*.class
@@ -188,11 +188,14 @@ autocmd! BufWritePost .vimrc source $MYVIMRC
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Color scheme
 
-colorscheme solarized
-set background=light
+colorscheme afterglow
+set background=dark
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight colors
+
+" List characters (trailing whitespace, tabs, etc.)
+highl SpecialKey ctermfg=DarkGrey
 
 " Spelling
 highl SpellBad ctermbg=White ctermfg=Red
