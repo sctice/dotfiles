@@ -1,4 +1,4 @@
-setHook(packageEvent("grDevices", "onLoad"),
-    function(...) grDevices::quartz.options(
-        width = 6,
-        height = 6))
+#' Set default view dimensions for quartz device
+setHook(
+  packageEvent("grDevices", "onLoad"),
+  function(...) grDevices::quartz.options(width = 6, height = 6))
