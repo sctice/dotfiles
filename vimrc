@@ -185,6 +185,12 @@ colorscheme default
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight colors
 
+" Tab line
+highl TabLine term=none cterm=none ctermfg=White ctermbg=DarkGray
+highl TabLineFill term=none cterm=none ctermfg=White ctermbg=DarkGray
+highl TabLineSel ctermfg=Green
+
+
 " List characters (trailing whitespace, tabs, etc.)
 highl SpecialKey ctermfg=DarkGrey
 
