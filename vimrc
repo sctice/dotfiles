@@ -179,8 +179,8 @@ autocmd! BufWritePost .vimrc source $MYVIMRC
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Color scheme
 
-colorscheme one
 set background=dark
+colorscheme default
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight colors
@@ -188,14 +188,17 @@ set background=dark
 " List characters (trailing whitespace, tabs, etc.)
 highl SpecialKey ctermfg=DarkGrey
 
-" Vertical column at edge of text width.
-highl ColorColumn ctermbg=Cyan ctermfg=Black
+" Matching bracket to bracket under the cursor
+highl MatchParen cterm=underline ctermfg=Green ctermbg=none
 
 " Spelling
-highl SpellBad ctermbg=White ctermfg=Red
-highl SpellCap ctermbg=White ctermfg=DarkBlue
-highl SpellRare ctermbg=White ctermfg=Brown
-highl SpellLocal ctermbg=White ctermfg=DarkCyan
+highl SpellBad term=none cterm=undercurl ctermbg=none ctermfg=Red
+highl SpellCap term=none cterm=undercurl ctermbg=none ctermfg=DarkBlue
+highl SpellRare term=none cterm=undercurl ctermbg=none ctermfg=Brown
+highl SpellLocal term=none cterm=undercurl ctermbg=none ctermfg=DarkCyan
+
+" Visual
+highl Visual term=none ctermbg=DarkGray ctermfg=Green
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Local override and tabbing behavior
