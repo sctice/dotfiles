@@ -68,26 +68,17 @@ endif
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Ctrl-P configuration
 
-let g:ctrlp_max_files = 0
+let g:ctrlp_clear_cache_on_exit = 1
+let g:ctrlp_lazy_update = 150
 let g:ctrlp_match_window = 'bottom,order:ttb,min:10,max:10,results=30'
-let g:ctrlp_working_path_mode = 0
+let g:ctrlp_max_files = 0
 let g:ctrlp_open_new_file = 't'
+let g:ctrlp_working_path_mode = 0
 
 if has("unix")
-  let g:ctrlp_clear_cache_on_exit = 1
-
-  " Require regular file or link. I once thought ignoring executables was a
-  " good idea, but lots of scripts are executable. Whoops.
-  let g:ctrlp_user_command = 'flist %s'
-
-  if executable("pmatch")
-    let g:ctrlp_match_func = { 'match': 'PMatch' }
-
-    function! PMatch(items, str, limit, mmode, ispath, crfile, regex)
-      let cmd = 'pmatch --limit ' . a:limit . ' ' . shellescape(a:str)
-      return split(system(cmd, join(a:items, "\n")."\n"))
-    endfunction
-  endif
+  let g:ctrlp_user_command = 'git ls-files -cmo
+    \ --exclude-standard %s
+    \ | squelch'
 endif
 
 noremap <Leader>f :CtrlP<CR>
