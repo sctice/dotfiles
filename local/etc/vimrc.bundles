@@ -11,7 +11,6 @@ call vundle#begin()
 Bundle 'gmarik/vundle'
 
 " Define bundles via Github repositories
-Bundle 'altercation/vim-colors-solarized'
 Bundle 'danilo-augusto/vim-afterglow'
 Bundle 'groenewege/vim-less'
 Bundle 'kien/ctrlp.vim'
@@ -23,11 +22,8 @@ Bundle 'tpope/vim-repeat'
 Bundle 'tpope/vim-surround'
 Bundle 'tpope/vim-unimpaired'
 Bundle 'vim-ruby/vim-ruby'
-Bundle 'vim-scripts/buffergrep'
 Bundle 'vim-scripts/ctags.vim'
 Bundle 'vim-scripts/renamer.vim'
-Bundle 'vim-scripts/scratch.vim'
-Bundle 'vim-scripts/tComment'
 
 let s:local_bundles_path=expand("~/.local/etc/vimrc.bundles.local")
 if filereadable(s:local_bundles_path)
