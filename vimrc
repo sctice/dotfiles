@@ -188,7 +188,7 @@ autocmd! BufWritePost .vimrc source $MYVIMRC
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Color scheme
 
-colorscheme afterglow
+colorscheme one
 set background=dark
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -196,6 +196,9 @@ set background=dark
 
 " List characters (trailing whitespace, tabs, etc.)
 highl SpecialKey ctermfg=DarkGrey
+
+" Vertical column at edge of text width.
+highl ColorColumn ctermbg=Cyan ctermfg=Black
 
 " Spelling
 highl SpellBad ctermbg=White ctermfg=Red

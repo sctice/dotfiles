@@ -11,9 +11,9 @@ call vundle#begin()
 Bundle 'gmarik/vundle'
 
 " Define bundles via Github repositories
-Bundle 'danilo-augusto/vim-afterglow'
 Bundle 'groenewege/vim-less'
 Bundle 'kien/ctrlp.vim'
+Bundle 'rakr/vim-one'
 Bundle 'tpope/tpope-vim-abolish'
 Bundle 'tpope/vim-commentary'
 Bundle 'tpope/vim-eunuch'
