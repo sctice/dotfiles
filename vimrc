@@ -204,16 +204,14 @@ highl SpellLocal ctermbg=White ctermfg=DarkCyan
 " globally. It would be nice if we could just set 'tabstop' and have
 " 'shiftwidth' and 'softtabstop' respect that setting, but some indent scripts
 " don't seem to respect the behavior outlined in the help.
-function! SetTabbing(spaces_per_tab, setglobal)
-  let setcmd = a:setglobal ? "set" : "setlocal"
-  execute setcmd . " shiftwidth=" . a:spaces_per_tab
-  execute setcmd . " tabstop=" . a:spaces_per_tab
-  execute setcmd . " softtabstop=" . a:spaces_per_tab
+function! SetTabbing(spaces_per_tab)
+  execute "setlocal shiftwidth=" . a:spaces_per_tab
+  execute "setlocal tabstop=" . a:spaces_per_tab
+  execute "setlocal softtabstop=" . a:spaces_per_tab
 endfunction
-command! -nargs=1 SetLocalTabbing call SetTabbing(<args>, 0)
-command! -nargs=1 SetGlobalTabbing call SetTabbing(<args>, 1)
+command! -nargs=1 Tab call SetTabbing(<args>)
 
-SetGlobalTabbing 2
+Tab 2
 
 let s:local_path = expand("~/.local/etc/vimrc.local")
 if filereadable(s:local_path)
