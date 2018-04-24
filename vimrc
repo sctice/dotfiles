@@ -76,9 +76,17 @@ let g:ctrlp_open_new_file = 't'
 let g:ctrlp_working_path_mode = 0
 
 if has("unix")
-  let g:ctrlp_user_command = 'git ls-files -cmo
-    \ --exclude-standard %s
-    \ | squelch'
+  let g:ctrlp_user_command = {
+  \   'types': {
+  \     1: [
+  \       '.git',
+  \       'git ls-files -cmo
+  \         --exclude-standard %s
+  \         | squelch'
+  \     ]
+  \   },
+  \   'fallback': 'find %s -type f'
+  \ }
 endif
 
 noremap <Leader>f :CtrlP<CR>
