@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+main() {
+  local dir="${1:-.}"
+  find_files "$dir" | squelch
+}
+
+find_files() {
+  local dir="$1"
+  if in_git_repo; then
+    git ls-files -co --exclude-standard "$dir"
+  else
+    find "$dir" -type f
+  fi
+}
+
+in_git_repo() {
+  [ -d .git ] || git rev-parse --git-dir > /dev/null 2>&1
+}
+
+
+main "$@"

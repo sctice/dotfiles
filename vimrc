@@ -65,6 +65,17 @@ if filereadable(s:bundles_path)
   exec "source " . s:bundles_path
 endif
 
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" FZF configuration
+
+" Add FZF's built-in vim plugin
+let s:fzf_path = expand("~/.local/lib/fzf")
+if isdirectory(s:fzf_path)
+  set runtimepath+=~/.local/lib/fzf
+  noremap <Leader>f :FZF<CR>
+endif
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Ctrl-P configuration
 
@@ -89,7 +100,6 @@ if has("unix")
   \ }
 endif
 
-noremap <Leader>f :CtrlP<CR>
 noremap <Leader>b :CtrlPBuffer<CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

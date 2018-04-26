@@ -63,6 +63,11 @@ export HISTCONTROL="ignoredups:ignorespace"
 export PAGER='less'
 export LESS='-R -F -X -+S'
 
+# To find files for FZF, use our custom script that uses git ls-files in git
+# repos and falls back to using find, passing the results in either case
+# through `squelch`.
+export FZF_DEFAULT_COMMAND=flist-git
+
 # Aliases
 
 alias ll='ls -l'
