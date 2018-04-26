@@ -26,7 +26,9 @@ function main(): void {
 }
 
 function fetchStats(array $weekNames): array {
-   $n = count($weekNames) - 1;
+   // Fetch more data than we need to make sure we have a full week's data for
+   // the oldest week.
+   $n = count($weekNames);
    $query = <<<EOT
       SELECT
          FROM_UNIXTIME(ps.`date`, '%Y-%u') AS 'week',
@@ -58,7 +60,10 @@ EOT;
 
    foreach ($lines as $line) {
       [$week, $user, $n] = explode("\t", $line);
-      $byWeek[$week][] = ['user' => $user, 'n' => (int)$n];
+      // Exclude partial week data fetched beyond the earliest week we want.
+      if (array_key_exists($week, $byWeek)) {
+         $byWeek[$week][] = ['user' => $user, 'n' => (int)$n];
+      }
    }
 
    return $byWeek;
@@ -67,7 +72,7 @@ EOT;
 function padWeeks(array $weeks): array {
    $n = max(array_map('count', $weeks));
    return array_map(function($group) use ($n) {
-      return array_pad($group, $n, ['user' => '<empty>', 'n' => 0]);
+      return array_pad($group, $n, ['user' => '', 'n' => 0]);
    }, $weeks);
 }
 
@@ -75,9 +80,7 @@ function display(array $weekNames, array $weeks): void {
    $cols = array_map('formatColumn', $weeks);
    $rows = joinColumns($cols);
    echo formatHeader($weekNames), "\n";
-   foreach ($rows as $row) {
-      echo "{$row}\n";
-   }
+   echo implode("\n", $rows), "\n";
 }
 
 function formatHeader(array $weekNames): string {
@@ -88,6 +91,9 @@ function formatHeader(array $weekNames): string {
 
 function formatColumn(array $week): array {
    return array_map(function($row) {
+      if ($row['n'] === 0) {
+         return str_repeat(' ', 19);
+      }
       return sprintf("%16s %2d", $row['user'], $row['n']);
    }, $week);
 }
