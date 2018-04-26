@@ -187,8 +187,8 @@ autocmd! BufWritePost .vimrc source $MYVIMRC
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Color scheme
 
-set background=dark
 colorscheme default
+set background=dark
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight colors
