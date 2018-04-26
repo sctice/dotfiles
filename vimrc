@@ -209,20 +209,14 @@ highl TabLineFill term=none cterm=none ctermfg=White ctermbg=DarkGray
 highl TabLineSel ctermfg=Green
 
 
-" List characters (trailing whitespace, tabs, etc.)
-highl SpecialKey ctermfg=DarkGrey
-
 " Matching bracket to bracket under the cursor
-highl MatchParen cterm=underline ctermfg=Green ctermbg=none
+highl MatchParen cterm=underline ctermfg=Red ctermbg=none
 
 " Spelling
-highl SpellBad term=none cterm=undercurl ctermbg=none ctermfg=Red
-highl SpellCap term=none cterm=undercurl ctermbg=none ctermfg=DarkBlue
-highl SpellRare term=none cterm=undercurl ctermbg=none ctermfg=Brown
-highl SpellLocal term=none cterm=undercurl ctermbg=none ctermfg=DarkCyan
-
-" Visual
-highl Visual term=none ctermbg=DarkGray ctermfg=Green
+highl SpellBad cterm=undercurl ctermbg=none ctermfg=Red
+highl SpellCap cterm=undercurl ctermbg=none ctermfg=DarkBlue
+highl SpellRare cterm=undercurl ctermbg=none ctermfg=Brown
+highl SpellLocal cterm=undercurl ctermbg=none ctermfg=DarkCyan
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Local override and tabbing behavior
