@@ -11,7 +11,6 @@ syntax on                 " Syntax highlighting
 
 set autoindent            " By default, match indent of previous line
 set autowrite             " Write before executing the 'make' command
-set background=light      " Light background for color schemes
 set backspace=2           " Allow <BS> to go past last insert
 set colorcolumn=+1        " Draw a line to mark the text width visually
 set cryptmethod=blowfish  " Use blowfish encryption instead of zip
@@ -198,7 +197,6 @@ autocmd! BufWritePost .vimrc source $MYVIMRC
 " Color scheme
 
 colorscheme default
-set background=dark
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Highlight colors
