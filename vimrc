@@ -119,15 +119,6 @@ command! WW w !sudo tee % >/dev/null
 " Open a new, empty tab quickly
 command! T tabedit
 
-" Open a new tab and read in the results of executing the rest of the command.
-" E.g., :TR ls
-command! -nargs=* TR tabnew | .!<args>
-
-" Shortcuts for common fugitive wrappers
-command! GS Gstatus
-command! GD Gdiff
-command! GE Gedit
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Mappings
 
