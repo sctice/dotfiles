@@ -6,6 +6,6 @@
 echo; uptime | sed -e 's/^ *//'
 
 # Print out a summary of CR leaders over the past few weeks
-echo -e "\nCR Leaders\n"; cr-leaders | head -n7; echo
+echo -e "\nCR Leaders\n"; cr-leaders | head -n10; echo
 
 # vim: sw=2 ts=2 sts=2 ft=sh

@@ -119,14 +119,35 @@ command! WW w !sudo tee % >/dev/null
 " Open a new, empty tab quickly
 command! T tabedit
 
-" Open a new tab and read in the results of executing the rest of the command.
-" E.g., :TR ls
-command! -nargs=* TR tabnew | .!<args>
+" Set up tab expansion given a number of spaces per tab, either locally or
+" globally. It would be nice if we could just set 'tabstop' and have
+" 'shiftwidth' and 'softtabstop' respect that setting, but some indent scripts
+" explicit set 'shiftwidth' and 'softtabstop' to values other than 0, which
+" breaks the default behavior.
+function! SetTabbing(spaces_per_tab, setcmd)
+  execute a:setcmd . " shiftwidth=" . a:spaces_per_tab
+  execute a:setcmd . " tabstop=" . a:spaces_per_tab
+  execute a:setcmd . " softtabstop=" . a:spaces_per_tab
+endfunction
+command! -nargs=1 Tab call SetTabbing(<args>, "set")
+command! -nargs=1 TabLocal call SetTabbing(<args>, "setlocal")
 
-" Shortcuts for common fugitive wrappers
-command! GS Gstatus
-command! GD Gdiff
-command! GE Gedit
+" Custom grep command
+"
+" Run a command that works like grep and outputs in a grep-like format via
+" :grep, temporarily replacing the current grep grepprg. For example:
+"
+" :CG subclasses Page
+function! CustomGrep(grepprg, ...)
+  let prev_grepprg = &grepprg
+  let grep_cmd = "silent grep! " . join(a:000, " ") . " | copen | redraw!"
+  echo a:grepprg
+  let &grepprg = a:grepprg
+  execute grep_cmd
+  let &grepprg = prev_grepprg
+endfunction
+command! -nargs=+ CG call CustomGrep(<f-args>)
+command! -nargs=+ SC call CustomGrep("subclasses", <f-args>)
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Mappings
@@ -217,22 +238,12 @@ highl SpellRare cterm=undercurl ctermbg=none ctermfg=Brown
 highl SpellLocal cterm=undercurl ctermbg=none ctermfg=DarkCyan
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Local override and tabbing behavior
-
-" Set up tab expansion given a number of spaces per tab, either locally or
-" globally. It would be nice if we could just set 'tabstop' and have
-" 'shiftwidth' and 'softtabstop' respect that setting, but some indent scripts
-" explicit set 'shiftwidth' and 'softtabstop' to values other than 0, which
-" breaks the default behavior.
-function! SetTabbing(spaces_per_tab, setcmd)
-  execute a:setcmd . " shiftwidth=" . a:spaces_per_tab
-  execute a:setcmd . " tabstop=" . a:spaces_per_tab
-  execute a:setcmd . " softtabstop=" . a:spaces_per_tab
-endfunction
-command! -nargs=1 Tab call SetTabbing(<args>, "set")
-command! -nargs=1 TabLocal call SetTabbing(<args>, "setlocal")
+" Default tabbing
 
 Tab 2
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Local override
 
 let s:local_path = expand("~/.local/etc/vimrc.local")
 if filereadable(s:local_path)

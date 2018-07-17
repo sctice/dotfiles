@@ -10,8 +10,9 @@
 	conflicts = diff --name-only --diff-filter=U
 	clean-merged = !git-clean-merged
 	staged = diff --cached --stat
-	log1 = log --pretty='%C(auto)%h%Creset %<(12,trunc)%aN %s'
+	log1 = log --date='format:%Y-%m-%d' --pretty='%C(auto)%h%Creset %ad %<(12,trunc)%aN %s'
 	logme = log --author=Shawn --pretty='%C(auto)%h%Creset %<(12,trunc)%ai %s'
+	changes = diff-index --name-only -r --diff-filter=ACMR HEAD
 
 [diff]
 	noprefix = true

@@ -11,6 +11,7 @@ call vundle#begin()
 Bundle 'gmarik/vundle'
 
 " Define bundles via Github repositories
+Bundle 'StanAngeloff/php.vim'
 Bundle 'groenewege/vim-less'
 Bundle 'kien/ctrlp.vim'
 Bundle 'tpope/tpope-vim-abolish'
