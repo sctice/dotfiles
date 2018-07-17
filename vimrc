@@ -229,3 +229,21 @@ let s:local_path = expand("~/.local/etc/vimrc.local")
 if filereadable(s:local_path)
   exec "source " . s:local_path
 endif
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Custom grep command
+
+" Run a command that works like grep and outputs in a grep-like format via
+" :grep, temporarily replacing the current grep grepprg. For example:
+"
+" :CG subclasses Page
+function! CustomGrep(grepprg, ...)
+  let prev_grepprg = &grepprg
+  let grep_cmd = "silent grep! " . join(a:000, " ") . " | copen | redraw!"
+  echo a:grepprg
+  let &grepprg = a:grepprg
+  execute grep_cmd
+  let &grepprg = prev_grepprg
+endfunction
+command! -nargs=+ CG call CustomGrep(<f-args>)
+command! -nargs=+ SC call CustomGrep("subclasses", <f-args>)
