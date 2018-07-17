@@ -25,6 +25,10 @@ Bundle 'vim-ruby/vim-ruby'
 Bundle 'vim-scripts/ctags.vim'
 Bundle 'vim-scripts/renamer.vim'
 
+" textobj-line requires textobj-user to be installed first
+Bundle 'vim-scripts/textobj-user'
+Bundle 'vim-scripts/textobj-line'
+
 let s:local_bundles_path=expand("~/.local/etc/vimrc.bundles.local")
 if filereadable(s:local_bundles_path)
   exec "source " . s:local_bundles_path
