@@ -62,8 +62,8 @@ end
 
 def filter(squelch_set, options)
   s = File::SEPARATOR
-  patterns = squelch_set.collect {|sp| as_grep_pattern(sp)}.join('|')
-  re = "^[^:]*(^|#{s})(#{patterns})([:#{s}]|$)"
+  patterns = squelch_set.collect { |sp| "(#{as_grep_pattern(sp)})" }
+  re = "^[^:]*(^|#{s})(#{patterns.join('|')})([:#{s}]|$)"
   Open3.pipeline(['grep', '-vE', re])
 end
 
@@ -74,22 +74,32 @@ def list(squelch_set, options)
 end
 
 def build_squelch_set(options)
-  return [] if ENV.key?('NOSQUELCH')
   squelch_set = Set.new
+  return squelch_set if ENV.key?('NOSQUELCH')
   squelch_set << '.?*' unless options.hidden
-  squelch_set.merge ENV.fetch('SQUELCH', '').split(':').select {|s| s != ''}
+  squelch_set.merge env_squelch_config
+  squelch_set.merge local_squelch_configs
+end
+
+def env_squelch_config
+  ENV.fetch('SQUELCH', '').split(':').select { |s| s != '' }
+end
+
+def local_squelch_configs
+  # Merge .squelch configs from each directory, starting from the current
+  # directory, up to the root.
+  patterns = []
   next_d = Pathname.new(Dir.pwd)
   begin
     d = next_d
     next_d = d.parent
     fp = d.join('.squelch')
     next unless fp.readable?
-    fp.each_line do |l|
-      l.chomp!
-      squelch_set << l unless l == '' || l[0] == '#'
-    end
+    patterns += fp.each_line
+      .map(&:strip)
+      .reject { |l| l == '' || l[0] == '#' }
   end until d.root?
-  squelch_set
+  patterns
 end
 
 def as_glob(glob)
@@ -98,14 +108,15 @@ end
 
 def as_grep_pattern(glob)
   s = File::SEPARATOR
-  as_pattern(glob, "[^#{s}]?", "[^#{s}]")
+  as_pattern(glob, "[^#{s}]", "[^#{s}]*")
 end
 
 def as_find_pattern(glob)
-  as_pattern(glob, "?", "*")
+  as_pattern(glob, ".", "*")
 end
 
 def as_pattern(glob, qmark, star)
+  # Implementation adapted from the Python standard library.
   i, n = 0, glob.length
   re = []
   while i < n

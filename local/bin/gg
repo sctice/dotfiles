@@ -7,9 +7,16 @@ require 'open3'
 # A curated list of git-grep options that take arguments (so we can avoid
 # treating the option argument as a gg argument).
 OPTS_WITH_ARGS = Set.new [
-  '--max-depth', '-C', '--context', '-A', '--after-context', '-B',
-  '--before-context', '-f'
+  '--max-depth',
+  '-C', '--context',
+  '-A', '--after-context',
+  '-B', '--before-context',
+  '-f'
 ]
+
+# A helper program to reject results according to a user-configured list of
+# patterns to ignore. May not exist, so we check for it before running it.
+SQUELCH = 'squelch'
 
 def usage(status)
   puts <<-EOT
@@ -29,82 +36,109 @@ end
 def main
   argv = ARGV.dup
 
-  if argv.empty? || argv.any? {|a| ['-h', '--help'].include?(a)}
-    usage(1)
-  end
+  usage(1) if argv.empty? || argv.any? { |a| ['-h', '--help'].include?(a) }
 
-  # Only force colors if the output is a terminal
-  color = STDOUT.tty? ? '--color=always' : ''
-
-  # For --raw, do minimal processing and exit early.
+  # For --raw, do minimal processing.
   if argv.delete('--raw')
-    gitgrep_args = argv
-    gitgrep_cmd = build_command(['git', 'grep', color, gitgrep_args])
-    statuses = Open3.pipeline(gitgrep_cmd, 'squelch')
-    error_status = statuses.find {|s| !s.success?}
-    exit error_status ? error_status.exitstatus : 0
+    exit raw_git_grep(argv)
   end
 
-  # Treat everything after '--' as an argument no matter what it looks like.
+  # Treat everything after '--' as an argument to this command (gg).
   sep_index = argv.rindex('--')
   if !sep_index.nil?
-    explicit_args = argv.slice!(sep_index, argv.length)
-    explicit_args.shift # throw away the '--'
+    our_explicit_args = argv.slice!(sep_index, argv.length)
+    our_explicit_args.shift # throw away the '--'
   else
-    explicit_args = []
+    our_explicit_args = []
   end
 
-  # Some git-grep options take an argument, so we try to recognize those and
-  # skip the argument in order to avoid treating it as an extension specifier.
-  last_opt_index = argv.rindex {|arg| arg.start_with?('-')}
+  # Extract the arguments to this command, which start after the last option.
+  last_opt_index = argv.rindex { |arg| arg.start_with?('-') }
   if !last_opt_index.nil?
+    # The git-grep option may or may not take an argument.
     last_opt = argv[last_opt_index]
-    arg_start = last_opt_index + (OPTS_WITH_ARGS.include?(last_opt) ? 2 : 1)
-    gg_args = argv.slice!(arg_start, argv.length)
+    last_opt_len = OPTS_WITH_ARGS.include?(last_opt) ? 2 : 1
+    our_arg_start = last_opt_index + last_opt_len
   else
-    # Use slice! to transfer gg args to 'gg_args', leaving argv empty.
-    gg_args = argv.slice!(0, argv.length)
+    # No git-grep options, so all args belong to us.
+    our_arg_start = 0
   end
-  gg_args += explicit_args
 
-  # Everything between 'gg' and the extensions specifier is a git-grep option
-  # passed through unmodified.
+  our_args = argv.slice!(our_arg_start, argv.length) + our_explicit_args
+
+  # Everything between 'gg' and the extensions specifier (which is what's left
+  # after the above processing) is a git-grep option.
   gitgrep_args = argv
 
-  if gg_args.empty?
-    warn "no extensions specifier or pattern given"
+  if our_args.empty?
+    warn "No extensions specifier or pattern given"
     usage 1
-  elsif gg_args.length == 1
-    warn "no extensions specifier given (use 'all' to match all extensions)"
+  elsif our_args.length == 1
+    warn "No extensions specifier given (use 'all' to match all extensions)"
     usage 1
   end
 
-  type_str, pattern, *pathspecs = gg_args
-
-  if pathspecs.empty?
-    pathspecs << '.'
-  end
+  exts_str, pattern, *pathspecs = our_args
+  pathspecs << '.' if pathspecs.empty?
 
   # If narrowing results by extension, expand each pathspec to match any of the
-  # specified extensions.
-  unless ['all', 'any'].include?(type_str)
-    types = type_str.split(',')
+  # specified extensions. E.g., with extension list "py,sh", the pathspec
+  # "tests/" becomes "tests/*.py", "tests/*.sh".
+  unless exts_str == 'any' or exts_str == 'all'
+    exts = exts_str.split(',')
     pathspecs = pathspecs.flat_map do |path|
-      types.map { |type| "#{path.chomp('/')}/*.#{type}" }
+      exts.map { |ext| "#{path.chomp('/')}/*.#{ext}" }
     end
   end
 
-  squelch_s, status = Open3.capture2('squelch', '--list-git')
-  pathspecs += squelch_s.each_line.map {|l| l.chomp}
+  # Pass any squelch definitions as extra pathspecs that exclude matching
+  # paths.
+  if command_exists?(SQUELCH)
+    squelch_patterns, status = Open3.capture2(SQUELCH, '--list-git')
+    pathspecs += squelch_patterns.each_line.map { |l| l.chomp }
+  end
 
-  cmd = build_command(['git', 'grep', '-In', '--no-index', color, gitgrep_args,
-         '-e', pattern, '--', pathspecs])
+  # -I (don't search binary files) has no long name.
+  cmd = build_command([
+    'git', 'grep',
+    '-I',
+    '--line-number',
+    '--no-index',
+    git_force_color,
+    gitgrep_args,
+    '-e', pattern,
+    '--', pathspecs
+  ])
 
   exec(*cmd)
 end
 
+def raw_git_grep(gitgrep_args)
+  gitgrep_cmd = build_command(['git', 'grep', git_force_color, gitgrep_args])
+  if command_exists?(SQUELCH)
+    statuses = Open3.pipeline(gitgrep_cmd, SQUELCH)
+    error_status = statuses.find { |s| !s.success? }
+    error_status ? error_status.exitstatus : 0
+  else
+    system(gitgrep_cmd)
+  end
+end
+
 def build_command(cmd)
   cmd.flatten.reject { |a| a.empty? }
+end
+
+def git_force_color
+  # Only force colors if the output is a terminal
+  STDOUT.tty? ? '--color=always' : ''
+end
+
+def command_exists?(cmd_name)
+  # Don't need the standard output; just the status. 'command' is a POSIX shell
+  # builtin that's only sometimes available as an executable, so we run it
+  # through a subshell.
+  _, status = Open3.capture2('sh', '-c', "command -v #{cmd_name}")
+  status.success?
 end
 
 main
