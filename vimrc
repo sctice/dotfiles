@@ -189,9 +189,6 @@ noremap <Leader>a :call ToggleAutoFormat()<CR>
 " Toggle highlighting of the last search
 noremap <Leader>h :set hlsearch! hlsearch?<CR>
 
-" Open a scratch buffer in a split
-noremap <Leader>s :Sscratch<CR>
-
 " Toggle relative numbering and normal line numbering
 noremap <Leader>r :set relativenumber!<CR>
 
