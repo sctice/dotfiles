@@ -2,8 +2,8 @@
 
 # Install the vundle plugin if it's not already present.
 if [ ! -e "${HOME}/.vim/bundle/vundle" ]; then
-    git clone 'https://github.com/gmarik/vundle.git' \
-        "${HOME}/.vim/bundle/vundle"
+  git clone 'https://github.com/gmarik/vundle.git' \
+    "${HOME}/.vim/bundle/vundle"
 fi
 
 # The 'bundlesupdated' file is touched each time we install/update bundles (via
@@ -14,10 +14,10 @@ status_file="${HOME}/.local/var/bundlesupdated"
 bundles_file="${HOME}/.local/etc/vimrc.bundles"
 bundle_local_file="${bundles_file}.local"
 if [ ! -e "${status_file}" ] || \
-        [ "${bundles_file}" -nt "${status_file}" ] || \
-        [ "${bundle_local_file}" -nt "${status_file}" ]
+  [ "${bundles_file}" -nt "${status_file}" ] || \
+  [ "${bundle_local_file}" -nt "${status_file}" ]
 then
-    # -E stops vim from complaining about input not coming from a terminal.
-    vim -E -u "${bundles_file}" +BundleInstall +qall
-    touch "${status_file}"
+  # -E stops vim from complaining about input not coming from a terminal.
+  vim -E -u "${bundles_file}" +BundleInstall +qall
+  touch "${status_file}"
 fi
