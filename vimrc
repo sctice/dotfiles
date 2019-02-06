@@ -58,28 +58,21 @@ set wildmode=list:longest
 " Same as above, but for insert completion.
 set completeopt=longest,menu
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Vundle initialization
-
+" Load Vundle bundles
 let s:bundles_path = expand("~/.local/etc/vimrc.bundles")
 if filereadable(s:bundles_path)
   exec "source " . s:bundles_path
 endif
 
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" FZF configuration
-
-" Add FZF's built-in vim plugin
+" Add FZF's built-in vim plugin for fuzzily finding files.
 let s:fzf_path = expand("~/.local/lib/fzf")
 if isdirectory(s:fzf_path)
   set runtimepath+=~/.local/lib/fzf
   noremap <Leader>f :FZF<CR>
 endif
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Ctrl-P configuration
-
+" Configure Ctrl-P, which we primarily use for switching between buffers and as
+" a fallback in the case that fzf isn't available.
 let g:ctrlp_clear_cache_on_exit = 1
 let g:ctrlp_lazy_update = 150
 let g:ctrlp_match_window = 'bottom,order:ttb,min:10,max:10,results=30'
@@ -87,6 +80,7 @@ let g:ctrlp_max_files = 0
 let g:ctrlp_open_new_file = 't'
 let g:ctrlp_working_path_mode = 0
 
+" Use native methods to find files.
 if has("unix")
   let g:ctrlp_user_command = {
   \   'types': {
@@ -101,20 +95,19 @@ if has("unix")
   \ }
 endif
 
+" Quick access to Ctrl-P's buffer filter.
 noremap <Leader>b :CtrlPBuffer<CR>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Simple plugin configuration
-
-" Don't remember positions in temporary git files used for things like commit
-" messages, rebase todos, and so on. This covers *everything* in a .git
-" directory, but the temporary files are by far the common case.
+" Configure restorepos.vim. Don't remember positions in temporary git files
+" used for things like commit messages, rebase todos, and so on. This covers
+" *everything* in a .git directory, but the temporary files are by far the
+" common case.
 let g:restorepos_ignore = ['\v(^|/).git(/|$)']
 
-" Enable matchit
+" Enable matchit to let % bounce between more things.
 runtime macros/matchit.vim
 
-" Slime
+" Slime, for interacting with REPLs.
 let g:slime_target = "vimterminal"
 let g:slime_python_ipython = 1
 let g:slime_no_mappings = 1
@@ -122,19 +115,16 @@ xmap <leader>s <Plug>SlimeRegionSend
 nmap <leader>s <Plug>SlimeParagraphSend
 nmap <leader>S <Plug>SlimeMotionSend
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" New commands
-
-" Use sudo to save the current file
+" Use sudo to save the current file.
 command! WW w !sudo tee % >/dev/null
 
-" Open a new, empty tab quickly
+" Open a new, empty tab quickly.
 command! T tabedit
 
-" Set up tab expansion given a number of spaces per tab, either locally or
-" globally. It would be nice if we could just set 'tabstop' and have
+" Set up tab expansion to a specific number of spaces per tab, either locally
+" or globally. It would be nice if we could just set 'tabstop' and have
 " 'shiftwidth' and 'softtabstop' respect that setting, but some indent scripts
-" explicit set 'shiftwidth' and 'softtabstop' to values other than 0, which
+" explicitly set 'shiftwidth' and 'softtabstop' to values other than 0, which
 " breaks the default behavior.
 function! SetTabbing(spaces_per_tab, setcmd)
   execute a:setcmd . " shiftwidth=" . a:spaces_per_tab
@@ -144,12 +134,9 @@ endfunction
 command! -nargs=1 Tab call SetTabbing(<args>, "set")
 command! -nargs=1 TabLocal call SetTabbing(<args>, "setlocal")
 
-" Custom grep command
-"
-" Run a command that works like grep and outputs in a grep-like format via
-" :grep, temporarily replacing the current grep grepprg. For example:
-"
-" :CG subclasses Page
+" Run a custom grep command that works like grep and outputs in a grep-like
+" format via :grep, temporarily replacing the current grep grepprg. For
+" example: :CG subclasses Page
 function! CustomGrep(grepprg, ...)
   let prev_grepprg = &grepprg
   let grep_cmd = "silent grep! " . join(a:000, " ") . " | copen | redraw!"
@@ -161,22 +148,13 @@ endfunction
 command! -complete=file -nargs=+ CG call CustomGrep(<f-args>)
 command! -complete=file -nargs=+ SC call CustomGrep("subclasses", <f-args>)
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Mappings
-
-" Thou shalt not arrow
-noremap <Up>    <NOP>
-noremap <Down>  <NOP>
-noremap <Left>  <NOP>
-noremap <Right> <NOP>
-
-" Yank the entire document to the clipboard
+" Yank the entire document to the clipboard.
 noremap <Leader>Y :%yank+<CR>
 
-" Toggle paste mode
+" Toggle paste mode.
 noremap <Leader>p :set paste! paste?<CR>
 
-" Toggle auto-formatting of paragraphs
+" Toggle auto-formatting of paragraphs.
 function! ToggleAutoFormat()
   let fopts = &formatoptions
   if stridx(fopts, 'a') >= 0
@@ -188,14 +166,11 @@ function! ToggleAutoFormat()
 endfunction
 noremap <Leader>a :call ToggleAutoFormat()<CR>
 
-" Toggle highlighting of the last search
+" Toggle highlighting of the last search.
 noremap <Leader>h :set hlsearch! hlsearch?<CR>
 
 " Toggle relative numbering and normal line numbering
 noremap <Leader>r :set relativenumber!<CR>
-
-" Open .vimrc in a new tab
-noremap <Leader>v :tabedit $MYVIMRC<CR>
 
 " Insert <Tab> or complete identifier if the cursor is after a keyword
 " character.
@@ -217,43 +192,35 @@ cnoremap <Esc>b <S-Left>
 cnoremap <Esc>f <S-Right>
 cnoremap <C-U>  <C-E><C-U>
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Auto commands
-
+" Open .vimrc in a new tab
+noremap <Leader>v :tabedit $MYVIMRC<CR>
 " Source the .vimrc file when it's written
 autocmd! BufWritePost .vimrc source $MYVIMRC
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Color scheme
-
+" Enforce the default color scheme.
 colorscheme default
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Highlight colors
-
-" Tab line
+" Customize the tab line colors so that it's easier (for me) to tell which tab
+" is active.
 highl TabLine term=none cterm=none ctermfg=White ctermbg=DarkGray
 highl TabLineFill term=none cterm=none ctermfg=White ctermbg=DarkGray
 highl TabLineSel ctermfg=Green
 
-
-" Matching bracket to bracket under the cursor
+" Highlight matching bracket to bracket under the cursor using something that
+" will work more often without being too distracting.
 highl MatchParen cterm=underline ctermfg=Red ctermbg=none
 
-" Spelling
+" Spelling.
 highl SpellBad cterm=undercurl ctermbg=none ctermfg=Red
 highl SpellCap cterm=undercurl ctermbg=none ctermfg=DarkBlue
 highl SpellRare cterm=undercurl ctermbg=none ctermfg=Brown
 highl SpellLocal cterm=undercurl ctermbg=none ctermfg=DarkCyan
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Default tabbing
-
+" Default indentation.
 Tab 2
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Local override
-
+" Allow an environment-aware vimrc set up by rcm to override anything in this
+" one.
 let s:local_path = expand("~/.local/etc/vimrc.local")
 if filereadable(s:local_path)
   exec "source " . s:local_path
