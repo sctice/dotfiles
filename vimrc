@@ -106,8 +106,10 @@ noremap <Leader>b :CtrlPBuffer<CR>
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Simple plugin configuration
 
-" Don't remember positions in commit messages.
-let g:restorepos_ignore = ['COMMIT_EDITMSG']
+" Don't remember positions in temporary git files used for things like commit
+" messages, rebase todos, and so on. This covers *everything* in a .git
+" directory, but the temporary files are by far the common case.
+let g:restorepos_ignore = ['\v(^|/).git(/|$)']
 
 " Enable matchit
 runtime macros/matchit.vim

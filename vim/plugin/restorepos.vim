@@ -1,4 +1,4 @@
-" restore the cursor position to the line and column it was on the last time
+" Restore the cursor position to the line and column it was on the last time
 " that the file was edited using data from the .viminfo file. The logic here
 " came from somewhere, but I'm not sure where anymore.
 
