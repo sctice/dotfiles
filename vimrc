@@ -112,6 +112,14 @@ let g:restorepos_ignore = ['COMMIT_EDITMSG']
 " Enable matchit
 runtime macros/matchit.vim
 
+" Slime
+let g:slime_target = "vimterminal"
+let g:slime_python_ipython = 1
+let g:slime_no_mappings = 1
+xmap <leader>s <Plug>SlimeRegionSend
+nmap <leader>s <Plug>SlimeParagraphSend
+nmap <leader>S <Plug>SlimeMotionSend
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " New commands
 
