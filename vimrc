@@ -118,9 +118,6 @@ nmap <leader>S <Plug>SlimeMotionSend
 " Use sudo to save the current file.
 command! WW w !sudo tee % >/dev/null
 
-" Open a new, empty tab quickly.
-command! T tabedit
-
 " Set up tab expansion to a specific number of spaces per tab, either locally
 " or globally. It would be nice if we could just set 'tabstop' and have
 " 'shiftwidth' and 'softtabstop' respect that setting, but some indent scripts
@@ -192,8 +189,8 @@ cnoremap <Esc>b <S-Left>
 cnoremap <Esc>f <S-Right>
 cnoremap <C-U>  <C-E><C-U>
 
-" Open .vimrc in a new tab
-noremap <Leader>v :tabedit $MYVIMRC<CR>
+" Open .vimrc.
+noremap <Leader>v :edit $MYVIMRC<CR>
 " Source the .vimrc file when it's written
 autocmd! BufWritePost .vimrc source $MYVIMRC
 
