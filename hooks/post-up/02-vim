@@ -17,6 +17,7 @@ if [ ! -e "${status_file}" ] || \
         [ "${bundles_file}" -nt "${status_file}" ] || \
         [ "${bundle_local_file}" -nt "${status_file}" ]
 then
-    vim -u "${bundles_file}" +BundleInstall +qall
+    # -E stops vim from complaining about input not coming from a terminal.
+    vim -E -u "${bundles_file}" +BundleInstall +qall
     touch "${status_file}"
 fi
