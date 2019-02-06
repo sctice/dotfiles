@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+def main
+  n = parse_n(ARGV.fetch(0, '1'))
+  n.times { puts random_place() }
+end
+
+def parse_n(str)
+  str.to_i.clamp(1, 2e31)
+end
+
+def random_place
+  URI::HTTP.build(
+    scheme: 'https',
+    host: 'www.google.com',
+    path: '/maps/@',
+    query: URI.encode_www_form({
+      'api' => 1,
+      'map_action' => 'map',
+      'center' => sprintf("%s,%s", rand_lat(), rand_lon()),
+      'basemap' => 'satellite'
+    }))
+end
+
+def rand_lat
+  format_coord(Random.rand(180.0) - 90.0)
+end
+
+def rand_lon
+  format_coord(Random.rand(360.0) - 180.0)
+end
+
+def format_coord(coord)
+  sprintf "%.6f", coord
+end
+
+main
