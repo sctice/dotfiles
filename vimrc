@@ -33,6 +33,8 @@ set scrolloff=10          " Keep min of 10 lines above/below cursor
 set showcmd               " Show partial commands in the status line
 set showmode              " Show current mode
 set smartcase             " Searches are case-sensitive if caps used
+set splitright            " Default new vsplit to right
+set splitbelow            " Default new hsplit to bottom
 set textwidth=79          " Hard wrap at 79 characters
 set vb t_vb=              " No visual bell
 set virtualedit=block     " Allow the cursor to go where there's no char
