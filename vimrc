@@ -148,8 +148,8 @@ function! CustomGrep(grepprg, ...)
   execute grep_cmd
   let &grepprg = prev_grepprg
 endfunction
-command! -nargs=+ CG call CustomGrep(<f-args>)
-command! -nargs=+ SC call CustomGrep("subclasses", <f-args>)
+command! -complete=file -nargs=+ CG call CustomGrep(<f-args>)
+command! -complete=file -nargs=+ SC call CustomGrep("subclasses", <f-args>)
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Mappings
