@@ -2,6 +2,7 @@
 
 # Install the vundle plugin if it's not already present.
 if [ ! -e "${HOME}/.vim/bundle/vundle" ]; then
+  mkdir -p "${HOME}/.vim/bundle"
   git clone 'https://github.com/gmarik/vundle.git' \
     "${HOME}/.vim/bundle/vundle"
 fi
@@ -18,6 +19,6 @@ if [ ! -e "${status_file}" ] || \
   [ "${bundle_local_file}" -nt "${status_file}" ]
 then
   # -E stops vim from complaining about input not coming from a terminal.
-  vim -E -u "${bundles_file}" +BundleInstall +qall
+  vim -E -u "${bundles_file}" +PluginInstall +qall
   touch "${status_file}"
 fi

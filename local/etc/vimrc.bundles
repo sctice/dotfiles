@@ -8,29 +8,34 @@ set rtp+=~/.vim/bundle/vundle/
 call vundle#begin()
 
 " Let Vundle manage Vundle
-Bundle 'gmarik/vundle'
+Plugin 'gmarik/vundle'
 
-" Define bundles via Github repositories
-Bundle 'StanAngeloff/php.vim'
-Bundle 'ctrlpvim/ctrlp.vim'
-Bundle 'groenewege/vim-less'
-Bundle 'tpope/tpope-vim-abolish'
-Bundle 'tpope/vim-commentary'
-Bundle 'tpope/vim-eunuch'
-Bundle 'tpope/vim-fugitive'
-Bundle 'tpope/vim-repeat'
-Bundle 'tpope/vim-surround'
-Bundle 'tpope/vim-unimpaired'
-Bundle 'vim-airline/vim-airline'
-Bundle 'vim-ruby/vim-ruby'
-Bundle 'vim-scripts/ctags.vim'
-Bundle 'vim-scripts/renamer.vim'
+" Generic plugins useful in a variety of situations.
+Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'jpalardy/vim-slime'
+Plugin 'tpope/tpope-vim-abolish'
+Plugin 'tpope/vim-commentary'
+Plugin 'tpope/vim-eunuch'
+Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-repeat'
+Plugin 'tpope/vim-surround'
+Plugin 'tpope/vim-unimpaired'
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-scripts/ctags.vim'
+Plugin 'vim-scripts/renamer.vim'
 
 " textobj-line requires textobj-user to be installed first
-Bundle 'vim-scripts/textobj-user'
-Bundle 'vim-scripts/textobj-line'
+Plugin 'vim-scripts/textobj-user'
+Plugin 'vim-scripts/textobj-line'
 
-let s:local_bundles_path=expand("~/.local/etc/vimrc.bundles.local")
+" Language-specific plugins.
+Plugin 'StanAngeloff/php.vim'
+Plugin 'groenewege/vim-less'
+Plugin 'mxw/vim-jsx'
+Plugin 'pangloss/vim-javascript'
+Plugin 'vim-ruby/vim-ruby'
+
+let s:local_bundles_path="$HOME/.local/etc/vimrc.bundles.local"
 if filereadable(s:local_bundles_path)
   exec "source " . s:local_bundles_path
 endif

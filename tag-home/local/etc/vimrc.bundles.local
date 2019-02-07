@@ -1,6 +1,6 @@
-Bundle 'embear/vim-localvimrc'
-Bundle 'jpalardy/vim-slime'
-Bundle 'mxw/vim-jsx'
-Bundle 'pangloss/vim-javascript'
-Bundle 'vim-scripts/a.vim'
-Bundle 'wting/rust.vim'
+" Generic plugins useful in a variety of situations.
+Plugin 'embear/vim-localvimrc'
+Plugin 'vim-scripts/a.vim'
+
+" Language-specific plugins.
+Plugin 'wting/rust.vim'
