@@ -1,2 +1,0 @@
-" Set tab expansion for files in any 'Code' subdirectory to 3.
-autocmd! BufNewFile,BufRead */Code/*,*/Checkouts/* Tab 3

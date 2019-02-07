@@ -23,15 +23,14 @@ call s:loadrc("commands")     " General commands
 call s:loadrc("mappings")     " General mappings, leaders and more
 call s:loadrc("colors")       " Color scheme, highlighting
 
-" Extras: more context-dependant
+" Extras: targeted to specific activities.
 
 call s:loadrc("matchit")      " Make % bounce between more things
 call s:loadrc("slime")        " Interact with REPLs
 call s:loadrc("custom-grep")  " Grep with temp grepprg replacement
 call s:loadrc("rcedit")       " Edit vimrc
 
-" Allow a local vimrc set up by rcm to override anything in this one.
-let s:local_path = expand("~/.local/etc/vimrc.local")
-if filereadable(s:local_path)
-  exec "source " . s:local_path
-endif
+" Context overrides: settings for a specific environment.
+
+call s:loadrc("localrc")      " Override by host
+call s:loadrc("projectrc")    " Override by project
