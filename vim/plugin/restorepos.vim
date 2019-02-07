@@ -32,4 +32,4 @@ function! s:restore()
     endif
 endfunction
 
-autocmd BufWinEnter ?* if s:check() | silent call s:restore() | endif
+autocmd! BufWinEnter ?* if s:check() | silent call s:restore() | endif

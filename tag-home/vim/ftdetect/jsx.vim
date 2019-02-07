@@ -13,6 +13,6 @@ fu! <SID>EnableJSX()
   return b:react_found
 endfu
 
-autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx
-autocmd BufNewFile,BufRead *.js
+autocmd! BufNewFile,BufRead *.jsx set filetype=javascript.jsx
+autocmd! BufNewFile,BufRead *.js
   \ if <SID>EnableJSX() | set filetype=javascript.jsx | endif
