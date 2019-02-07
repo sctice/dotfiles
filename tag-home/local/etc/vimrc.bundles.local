@@ -1,5 +1,4 @@
 " Generic plugins useful in a variety of situations.
-Plugin 'embear/vim-localvimrc'
 Plugin 'vim-scripts/a.vim'
 
 " Language-specific plugins.
