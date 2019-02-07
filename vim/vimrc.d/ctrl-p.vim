@@ -1,10 +1,19 @@
 " Configure Ctrl-P, which we primarily use for switching between buffers and as
 " a fallback in the case that fzf isn't available.
-let g:ctrlp_clear_cache_on_exit = 1
+
+" Only update after 150ms of no typing.
 let g:ctrlp_lazy_update = 150
-let g:ctrlp_match_window = 'bottom,order:ttb,min:10,max:10,results=30'
+
+" Show up to 20 results.
+let g:ctrlp_match_window = 'max:20'
+
+" No limit on the number of files.
 let g:ctrlp_max_files = 0
-let g:ctrlp_open_new_file = 't'
+
+" When creating a new file, replace the current buffer.
+let g:ctrlp_open_new_file = 'r'
+
+" Always start from the current directory.
 let g:ctrlp_working_path_mode = 0
 
 " Use native methods to find files.

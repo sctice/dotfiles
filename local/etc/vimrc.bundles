@@ -1,6 +1,6 @@
 " Required to be run directly from the command line, bypassing .vimrc
 if &compatible
-    set nocompatible
+  set nocompatible
 end
 
 filetype off
@@ -12,8 +12,8 @@ Bundle 'gmarik/vundle'
 
 " Define bundles via Github repositories
 Bundle 'StanAngeloff/php.vim'
+Bundle 'ctrlpvim/ctrlp.vim'
 Bundle 'groenewege/vim-less'
-Bundle 'kien/ctrlp.vim'
 Bundle 'tpope/tpope-vim-abolish'
 Bundle 'tpope/vim-commentary'
 Bundle 'tpope/vim-eunuch'
