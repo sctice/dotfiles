@@ -24,10 +24,6 @@ Plugin 'vim-airline/vim-airline'
 Plugin 'vim-scripts/ctags.vim'
 Plugin 'vim-scripts/renamer.vim'
 
-" textobj-line requires textobj-user to be installed first
-Plugin 'vim-scripts/textobj-user'
-Plugin 'vim-scripts/textobj-line'
-
 " Language-specific plugins.
 Plugin 'StanAngeloff/php.vim'
 Plugin 'groenewege/vim-less'
