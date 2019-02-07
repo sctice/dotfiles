@@ -3,7 +3,8 @@
 
 " Source a vimrc.d/ config file by name, without extension.
 function! s:loadrc(file)
-  exec "source $HOME/.vim/vimrc.d/" . a:file . ".vim"
+  let l:dir = expand("~/.vim/vimrc.d/")
+  exec "source " . l:dir . a:file . ".vim"
 endfunction
 
 " Core: broadly applicable. In this section and the "Extras" section, order is
@@ -30,7 +31,7 @@ call s:loadrc("custom-grep")  " Grep with temp grepprg replacement
 call s:loadrc("rcedit")       " Edit vimrc
 
 " Allow a local vimrc set up by rcm to override anything in this one.
-let s:local_path = "$HOME/.local/etc/vimrc.local"
+let s:local_path = expand("~/.local/etc/vimrc.local")
 if filereadable(s:local_path)
   exec "source " . s:local_path
 endif

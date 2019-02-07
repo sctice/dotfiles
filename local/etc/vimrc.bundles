@@ -35,7 +35,7 @@ Plugin 'mxw/vim-jsx'
 Plugin 'pangloss/vim-javascript'
 Plugin 'vim-ruby/vim-ruby'
 
-let s:local_bundles_path="$HOME/.local/etc/vimrc.bundles.local"
+let s:local_bundles_path = expand("~/.local/etc/vimrc.bundles.local")
 if filereadable(s:local_bundles_path)
   exec "source " . s:local_bundles_path
 endif
