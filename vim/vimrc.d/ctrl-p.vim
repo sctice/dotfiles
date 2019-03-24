@@ -33,3 +33,8 @@ endif
 
 " Quick access to Ctrl-P's buffer filter.
 noremap <Leader>b :CtrlPBuffer<CR>
+
+" Don't separate buffers into name and path. Just use the full path for the
+" buffer name so that we can fuzzy match by path.
+let g:ctrlp_bufname_mod = ':~:.'
+let g:ctrlp_bufpath_mod = ''
