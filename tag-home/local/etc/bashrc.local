@@ -6,7 +6,8 @@ fi
 # For use by the lister and finder utilities; ignore these directories
 export SQUELCH="vendor:bower_components:node_modules:__pycache__:*.pyc"
 
-# Aliases
+# Like PATH, but for changing directories.
+export CDPATH=".:~:~/Shelf:~/Projects"
 
 # If we have GNU ls installed, use it to group directories first.
 if hash gls 2>/dev/null; then
