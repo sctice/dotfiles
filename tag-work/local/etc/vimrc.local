@@ -1,0 +1,3 @@
+" Remove the system's default position-restoring logic because it doesn't
+" exclude commit files.
+autocmd! fedora BufReadPost
