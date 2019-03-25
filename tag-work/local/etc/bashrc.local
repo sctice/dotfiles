@@ -36,8 +36,6 @@ alias ls='ls -h --color=auto --group-directories-first'
 
 alias cdc='cd ~/Code/'
 
-alias cl='clear-logs'
-
 # Replace path with one suitable for opening via scp in remote vim. The remote
 # path is made absolute.
 fr() {
