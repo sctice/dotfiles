@@ -5,14 +5,23 @@
 
 # Functions
 
-# Remove duplicate entries from a pathlist while maintaining the order.
+# Join argument 2... with argument 1. Supports multi-character arguments.
+implode() {
+  local d="$1"; shift
+  echo -n "$1"; shift
+  printf "%s" "${@/#/$d}";
+}
+
+# Remove duplicate entries from a pathlist while maintaining the order. The
+# short argument names are required on macOS and '-' argument to paste are
+# required on macOS.
 unique_pathlist() {
   tr ':' "\n" <<<"$1" \
-    | cat --number \
+    | cat -n \
     | sort --key 2 --unique \
     | sort --numeric \
-    | cut --field 2 \
-    | paste --serial --delimiters ':'
+    | cut -f2 \
+    | paste -sd: -
 }
 
 # Expands simple text tokens in the passed-in string into a prompt
