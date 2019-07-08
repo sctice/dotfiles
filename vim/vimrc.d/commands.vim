@@ -4,7 +4,7 @@
 command! Bufonly silent! execute "%bd|e#|bd#"
 
 " Much more convenient than typing out ':tabnew'.
-command! T :tabnew
+command! -nargs=? T :tabnew <args>
 
 " Use sudo to save the current file.
 command! WW w !sudo tee % >/dev/null
