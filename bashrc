@@ -30,7 +30,8 @@ expand_prompt() {
 	  s/<BLU>/\\[\\033[34m\\]/g
 	  s/<MAG>/\\[\\033[35m\\]/g
 	  s/<CYA>/\\[\\033[36m\\]/g
-	  s/<WHI>/\\[\\033[37m\\]/g
+	  s/<GRY>/\\[\\033[37m\\]/g
+	  s/<WHI>/\\[\\033[97m\\]/g
 	  s/<NUL>/\\[\\033[0m\\]/g
 	}
 	EOF
@@ -47,7 +48,7 @@ export PATH="${HOME}/.local/bin:${PATH}"
 # titles with each new prompt. We do this because systems often do this
 # differently, and we'd like the same style across terminal tabs when some are
 # local and others are connected to a remote host.
-export MY_PS1=$(expand_prompt '<WIN><CYA>\A <MAG>\h <BLU>\W <RED>[\j]<NUL> ')
+export MY_PS1=$(expand_prompt '<WIN><CYA>\A <MAG>\u<GRY>@<MAG>\h <BLU>\W <RED>[\j]<NUL> ⊦ ')
 export PS1="$MY_PS1"
 export MY_PS2='...> '
 export PS2="$MY_PS2"
