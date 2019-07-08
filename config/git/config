@@ -13,6 +13,7 @@
 	log1 = log --date='format:%Y-%m-%d' --pretty='%C(auto)%h%Creset %ad %<(12,trunc)%aN %s'
 	logme = log --author=Shawn --pretty='%C(auto)%h%Creset %<(12,trunc)%ai %s'
 	changes = diff-index --name-only -r --diff-filter=ACMR HEAD
+	clean-npm = checkout -- '**/package-lock.json'
 
 [diff]
 	noprefix = true

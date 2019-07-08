@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+pgrep -u $(whoami) eslint_d | xargs kill

@@ -13,6 +13,7 @@ Plugin 'gmarik/vundle'
 " Generic plugins useful in a variety of situations.
 Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jpalardy/vim-slime'
+Plugin 'leafgarland/typescript-vim'
 Plugin 'tpope/tpope-vim-abolish'
 Plugin 'tpope/vim-commentary'
 Plugin 'tpope/vim-eunuch'

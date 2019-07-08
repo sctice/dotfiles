@@ -8,7 +8,7 @@ main() {
 find_files() {
   local dir="$1"
   if in_git_repo; then
-    git ls-files -co --exclude-standard "$dir"
+    git ls-files --cached --others --exclude-standard "$dir"
   else
     find "$dir" -type f
   fi
