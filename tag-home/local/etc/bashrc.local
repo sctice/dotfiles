@@ -9,6 +9,9 @@ export SQUELCH="vendor:bower_components:node_modules:__pycache__:*.pyc"
 # Like PATH, but for changing directories.
 export CDPATH=".:~:~/Shelf:~/Projects"
 
+# Initialize rbenv to override system ruby.
+eval "$(rbenv init -)"
+
 # If we have GNU ls installed, use it to group directories first.
 if hash gls 2>/dev/null; then
   alias ls='gls -h --color=auto --group-directories-first'
