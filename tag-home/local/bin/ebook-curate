@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+
+LIBRARY=${EBOOK_LIBRARY:-$HOME/Dropbox/Shelf/Books/Ebooks}
+
+curate_metadata() {
+  local epub="$1"
+  local tmp=$(mktemp -t metadata)
+  trap "rm $tmp" EXIT
+  fetch_metadata_into "$epub" "$tmp" || exit 1
+  ${EDITOR:-vim} "$tmp" || exit 1
+  write_fetched_metadata "$tmp" "$epub"
+}
+
+curate_file() {
+  local epub="$1"
+  [ ! -r "$epub" ] && return 1
+  local author=$(parse_author_from_metadata "$epub")
+  local title=$(parse_title_from_metadata "$epub")
+  local series=$(parse_series_from_metadata "$epub")
+  local dir=$(clean_path_component <<<"$author")
+  local file=$(clean_path_component <<<"$title").epub
+  if [ -n "$series" ]; then
+    read index series_name < <(parse_series_and_index "$series")
+    series_component=$(clean_path_component <<<"$series_name")
+    index_component=$(printf "%02d" "$index")
+    dir="${dir}/${series_component}"
+    file="${index_component}-${file}"
+  fi
+  local path="$dir/$file"
+  echo "library  : $LIBRARY"
+  echo "original : $epub"
+  echo "move to  : $path"
+  while true; do
+    read -e -p "Proceed [y/N/e]? " proceed
+    case "$proceed" in
+      e*)
+        read -e -p 'move to  : ' -i "$path" new_path
+        path="$new_path"
+        ;;
+      y*)
+        mkdir -p "$LIBRARY/"$(dirname "$path")
+        mv -iv "$epub" "$LIBRARY/$path"
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+}
+
+curate_cover() {
+  local epub="$1"
+  local cover_source="$2"
+  if [ ! -r "$cover_source" ]; then
+    local tmpdir=$(mktemp -d -t cover)
+    trap "rm -rf $tmpdir" EXIT
+    cover_source=$(fetch_cover_from_url "$cover_source" "$tmpdir")
+  fi
+  ebook-meta --cover "${cover_source}" "$epub"
+}
+
+fetch_cover_from_url() {
+  local url="$1"
+  local tmpdir="$2"
+  local cover_basename=$(basename "$url")
+  local cover_ext="${cover_basename##*.}"
+  local cover="$tmpdir/cover.${cover_ext}"
+  curl -o "$cover" "$cover_source"
+  echo "$cover"
+}
+
+parse_isbn_from_metadata() {
+  ebook-meta "$1" | perl -wnle '/isbn:(\d+)/ and print $1' | head -n1
+}
+
+parse_title_from_metadata() {
+  ebook-meta "$1" \
+    | perl -wnle '/^Title[^:]*: (.*)/ and print $1' \
+    | head -n1
+}
+
+parse_series_from_metadata() {
+  ebook-meta "$1" \
+    | perl -wnle '/^Series[^:]*: (.*)/ and print $1'
+}
+
+parse_series_and_index() {
+  local series=$(perl -wple 's/ +#\d+$//' <<<"$1")
+  local index=$(perl -wnle '/#(\d+)$/ and print $1' <<<"$1")
+  echo "${index:-1} ${series}"
+}
+
+parse_author_from_metadata() {
+  ebook-meta "$1" \
+    | perl -wnle '/^Author[^:]*: ([^\[]*)/ and print $1' \
+    | perl -ple 's/\s+$//g' \
+    | head -n1
+}
+
+clean_path_component() {
+  tr -d ',;:.?&()[]' | tr -s ' ' '-'
+}
+
+fetch_metadata_into() {
+  local epub="$1"
+  local dest="$2"
+  local by=()
+  local isbn=$(parse_isbn_from_metadata "$epub")
+  if [ -n "$isbn" ]; then
+    by+=(--isbn "$isbn")
+  else
+    title=$(parse_title_from_metadata "$epub")
+    author=$(parse_author_from_metadata "$epub")
+    by+=(--title "$title" --authors "$author")
+  fi
+  fetch-ebook-metadata "${by[@]}" 2>/dev/null >"$dest" \
+    || fetch_local_metadata_into "$epub" "$dest"
+}
+
+fetch_local_metadata_into() {
+  local epub="$1"
+  local dest="$2"
+  local meta=$(ebook-meta "$epub") || return 1
+  printf "LOCAL METADATA (FETCH FAILED):\n\n" >"$dest"
+  echo "$meta" >>"$dest"
+}
+
+write_fetched_metadata() {
+  local metadata_path="$1"
+  local epub="$2"
+  local cmd=()
+  while read name colon value; do
+    case "$name" in
+      Title)
+        cmd+=(--title "$value")
+        ;;
+      Series)
+        read index series < <(parse_series_and_index "$value")
+        cmd+=(--series "$series" --index "$index")
+        ;;
+      Author\(s\))
+        cmd+=(--authors "$value")
+        ;;
+      Comments)
+        cmd+=(--comments "$value")
+        ;;
+      Tags)
+        cmd+=(--tags "$value")
+        ;;
+      Identifiers)
+        for id in $(tr -d , <<<"$value"); do
+          cmd+=(--identifier "$id")
+        done
+        ;;
+      Publisher)
+        cmd+=(--publisher "$value")
+        ;;
+      Published)
+        cmd+=(--date "$value")
+        ;;
+      Languages)
+        cmd+=(--language "$value")
+        ;;
+    esac
+  done < "$metadata_path"
+  ebook-meta "${cmd[@]}" "$epub"
+}
+
+if [ "$#" -eq 1 ]; then
+  curate_metadata "$1"
+else
+  cmd="$1"; shift
+  case "$cmd" in
+    meta)
+      curate_metadata "$@"
+      ;;
+    file)
+      curate_file "$@"
+      ;;
+    cover)
+      curate_cover "$@"
+      ;;
+    *)
+      echo "ebook-curate: invalid command"
+      echo "example:"
+      echo "   ebook-curate [meta] EPUB"
+      echo "   ebook-curate file EPUB"
+      echo "   ebook-curate cover EPUB (URL|FILE)"
+      exit 1
+  esac
+fi
