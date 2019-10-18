@@ -26,6 +26,7 @@ Plugin 'vim-scripts/renamer.vim'
 
 " Language-specific plugins.
 Plugin 'StanAngeloff/php.vim'
+Plugin 'fgsch/vim-varnish'
 Plugin 'groenewege/vim-less'
 Plugin 'leafgarland/typescript-vim'
 Plugin 'mxw/vim-jsx'
