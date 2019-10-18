@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+# Reads paths from a file passed as an argument, one per line, that should be
+# simplified. "Simplified" means to remove spaces, replace a space-separated
+# dash with two underscores, and generally remove anything other than
+# alphanumeric characters, dashes, and underscores. Example:
+#
+#    $ ./tools/rename-simplify <(find . -type f)
+#    $ ./tools/rename-simplify some-file.txt
+
+
+require 'pathname'
+require 'readline'
+
+
+def main
+  last = nil
+  ARGV.each do |file_path|
+    next if !File.exists? file_path
+    File.open(file_path).each_line do |path|
+      path = Pathname.new(path.chomp).cleanpath.to_s
+      simplified = simplify path
+      next if simplified == path
+      if same_mod_ext(simplified, last)
+        rename(path, simplified)
+      else
+        simplified = prompt_rewrite(path, simplified)
+        if simplified != path
+          rename(path, simplified)
+          last = simplified
+        end
+      end
+    end
+  end
+end
+
+def prompt_rewrite(current, simplified)
+  loop do
+    puts
+    puts "current: #{current}"
+    puts "rewrite: #{simplified}"
+    answer = prompt "[y]es, [n]o, [e]dit > "
+    if /^y$/.match(answer)
+      return simplified
+    elsif /^n/.match(answer)
+      return current
+    elsif /^e/.match(answer)
+      simplified = prompt "new name > "
+    end
+  end
+end
+
+def prompt(prompt_text)
+  Readline.readline(prompt_text, false)
+end
+
+def rename(from, to)
+  File.rename(from, to)
+end
+
+def simplify(line)
+  line
+    .gsub(/ +/, '_')
+    .gsub(/[^a-zA-Z0-9_\/.-]/, '')
+    .gsub(/\.(?=_)/, '')
+    .gsub('_-_', '__')
+    .gsub(/_{3,}/, '__')
+end
+
+def same_mod_ext(path1, path2)
+  return false if path1.nil? || path2.nil?
+  return path1.gsub(/\.[^.]+$/, '') == path2.gsub(/\.[^.]+$/, '')
+end
+
+begin
+  main
+rescue Interrupt
+  puts
+end
