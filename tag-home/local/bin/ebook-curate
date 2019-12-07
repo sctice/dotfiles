@@ -101,7 +101,7 @@ parse_author_from_metadata() {
 }
 
 clean_path_component() {
-  tr -d ',;:.?&()[]' | tr -s ' ' '-'
+  tr -d ",;:.?&()[]'\"" | tr -s ' ' '-'
 }
 
 fetch_metadata_into() {
