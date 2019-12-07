@@ -71,7 +71,9 @@ fetch_cover_from_url() {
 }
 
 parse_isbn_from_metadata() {
-  ebook-meta "$1" | perl -wnle '/isbn:(\d+)/ and print $1' | head -n1
+  ebook-meta "$1" \
+    | ruby -nle 'print $1.gsub("-", "") if /isbn:([\d-]+)/' \
+    | head -n1
 }
 
 parse_title_from_metadata() {
