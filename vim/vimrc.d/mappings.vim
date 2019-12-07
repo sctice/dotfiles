@@ -36,6 +36,12 @@ noremap <Leader>Y :%yank+<CR>
 " so map it to a no-op.
 noremap <C-b> <nop>
 
+" Configure key bindings for the quick fix window, managed by QFEnter.
+let g:qfenter_keymap = {}
+let g:qfenter_keymap.vopen = ['<C-v>']
+let g:qfenter_keymap.hopen = ['<C-CR>', '<C-s>', '<C-x>']
+let g:qfenter_keymap.topen = ['<C-t>']
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Command
 
