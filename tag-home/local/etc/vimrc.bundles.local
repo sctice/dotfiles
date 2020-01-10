@@ -2,4 +2,4 @@
 Plugin 'vim-scripts/a.vim'
 
 " Language-specific plugins.
-Plugin 'wting/rust.vim'
+Plugin 'rust-lang/rust.vim'
