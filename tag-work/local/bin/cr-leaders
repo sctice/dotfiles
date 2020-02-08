@@ -31,7 +31,7 @@ function fetchStats(array $weekNames): array {
    $n = count($weekNames);
    $query = <<<EOT
       SELECT
-         FROM_UNIXTIME(ps.`date`, '%Y-%u') AS 'week',
+         FROM_UNIXTIME(ps.`date`, '%x-%v') AS 'week',
          CONCAT_WS(' ',
             SUBSTRING(e.`first_name`, 1, 14),
             SUBSTRING(e.`last_name`, 1, 1)
@@ -53,7 +53,7 @@ EOT;
    exec($sshCmd, $lines);
 
    $byWeek = array_reduce($weekNames, function($carry, $timeStr) {
-      $weekName = strftime('%Y-%V', strtotime($timeStr));
+      $weekName = strftime('%G-%V', strtotime($timeStr));
       $carry[$weekName] = [];
       return $carry;
    }, []);
