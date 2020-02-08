@@ -94,4 +94,11 @@ if [ -r ~/.local/etc/bashrc.local ]; then
   source ~/.local/etc/bashrc.local
 fi
 
+# A shortcut to interactively select a tmux session using fuzzy find and attach
+# to the session.
+function tat() {
+  local session=$(tmux ls | fzf | cut -d: -f1)
+  [ -n "$session" ] && tmux attach-session -t "$session"
+}
+
 # vim: sw=2 ts=2 sts=2 ft=sh
