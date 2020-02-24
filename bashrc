@@ -96,7 +96,7 @@ fi
 
 # A shortcut to interactively select a tmux session using fuzzy find and attach
 # to the session.
-function tat() {
+function ta() {
   local session=$(tmux ls | fzf | cut -d: -f1)
   [ -n "$session" ] && tmux attach-session -t "$session"
 }
