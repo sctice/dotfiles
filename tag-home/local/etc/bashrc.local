@@ -10,8 +10,13 @@ if type brew &>/dev/null; then
   fi
 fi
 
-# For use by the lister and finder utilities; ignore these directories
-export SQUELCH="vendor:bower_components:node_modules:__pycache__:*.pyc"
+# For use by the lister and finder utilities; ignore these
+export SQUELCH=$(implode : \
+  node_modules vendor \
+  __pycache__ '*.pyc' \
+  renv \
+  bower_components \
+)
 
 # Like PATH, but for changing directories.
 export CDPATH=".:~:~/Shelf:~/Projects"
@@ -28,4 +33,4 @@ fi
 
 alias cdd='cd ~/Desktop'
 
-# vim: sw=2 ts=2 sts=2 ft=sh
+# vim: sw=2 ts=2 sts=2 ft=bash
