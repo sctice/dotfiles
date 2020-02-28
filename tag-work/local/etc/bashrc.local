@@ -21,7 +21,7 @@ export MY_CODE_DIR="${HOME}/Code/"
 export FZF_DEFAULT_COMMAND=flist-git
 
 # Directories to exclude from find-utils results
-export SQUELCH="vendor:node_modules:3P:Deprecated:Locale:Migrations"
+export SQUELCH="vendor:node_modules:3P:Deprecated:Migrations"
 
 # Like PATH, but for changing directories.
 export CDPATH=".:~:~/Checkouts"
