@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-LIBRARY=${EBOOK_LIBRARY:-$HOME/Dropbox/Shelf/Books/Ebooks}
+LIBRARY=${EBOOK_LIBRARY:-$HOME/Dropbox/Shawn/Shelf/Books/Ebooks}
 
 curate_metadata() {
   local epub="$1"
