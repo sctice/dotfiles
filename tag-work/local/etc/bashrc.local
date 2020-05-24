@@ -46,4 +46,18 @@ fr() {
   ff "$@" | sed -r "s/^\.?\/?/scp:\/\/com\/${d}\//"
 }
 
+# Authenticate with the app API on Cominor and set an environment variable with
+# the auth token for easy use in cURL requests. This is a function so that we
+# can export the token as an environment variable in the current shell.
+set-ifixit-api-token() {
+  exec 5>&1
+  auth_transcript=$(api-authenticate | tee /dev/fd/5)
+  exec 5>&-
+  token=$(awk '/^Auth/ {print $3}' <<<"$auth_transcript")
+  if [ -n "$token" ]; then
+    export IFIXIT_API_TOKEN="$token"
+    echo "IFIXIT_API_TOKEN=$token"
+  fi
+}
+
 # vim: sw=2 ts=2 sts=2 ft=sh
