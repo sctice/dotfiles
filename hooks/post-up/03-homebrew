@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+brewfile="${HOME}/.local/etc/Brewfile"
+status_file="${brewfile}.lock.json"
+
+# Only continue if we found a Brewfile.
+[ ! -e "$brewfile" ] && exit
+
+echo -n "Checking Brewfile... "
+
+if [ ! -e "$status_file" -o "$brewfile" -nt "$status_file" ]; then
+  echo "updating..."
+  brew bundle --file "$brewfile"
+  echo "Assessing cleanup..."
+  brew bundle cleanup --file "$brewfile"
+  if [ -n "${BREW_CLEANUP:-}" ]; then
+    echo "Cleaning up..."
+    brew bundle cleanup --file "$brewfile" --force
+  else
+    echo "Rerun with BREW_CLEANUP=1 to apply"
+  fi
+  touch "$status_file"
+else
+  echo "up to date"
+fi
