@@ -1,9 +1,22 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-# When the "airport" utility exists, symlink it to our local bin. We'd like to
-# do this only for the "home" tag, but rcm doesn't support per-tag hooks.
-airport_src="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-airport_dst="${HOME}/.local/bin/airport"
-if [ -e "$airport_src" ] && ! [ -e "$airport_dst" ]; then
-  ln -s "$airport_src" "$airport_dst"
-fi
+set -euo pipefail
+
+link_airport_cmd() {
+  airport_src="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+  airport_dst="${HOME}/.local/bin/airport"
+
+  # Do nothing if the file doesn't exist on the platform.
+  [ ! -e "$airport_src" ] && return
+
+  echo -n "Checking for airport shortcut... "
+  if [ ! -e "$airport_dst" ]; then
+    echo -n "not found, linking..."
+    ln -s "$airport_src" "$airport_dst"
+    echo "done"
+  else
+    echo "present"
+  fi
+}
+
+link_airport_cmd

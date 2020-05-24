@@ -2,26 +2,35 @@
 
 set -euo pipefail
 
-brewfile="${HOME}/.local/etc/Brewfile"
-status_file="${brewfile}.lock.json"
+run_brew_bundle() {
+  local brewfile="${HOME}/.local/etc/Brewfile"
+  local status_file="${brewfile}.lock.json"
 
-# Only continue if we found a Brewfile.
-[ ! -e "$brewfile" ] && exit
+  # Only continue if we found a Brewfile.
+  [ ! -e "$brewfile" ] && exit
 
-echo -n "Checking Brewfile... "
+  echo -n "Checking Brewfile... "
 
-if [ ! -e "$status_file" -o "$brewfile" -nt "$status_file" ]; then
-  echo "updating..."
-  brew bundle --file "$brewfile"
-  echo "Assessing cleanup..."
+  if [ ! -e "$status_file" -o "$brewfile" -nt "$status_file" ]; then
+    echo "out of date, running brew bundle..."
+    brew bundle --file "$brewfile"
+    echo "Running bundle cleanup..."
+    run_bundle_cleanup "$brewfile"
+    touch "$status_file"
+  else
+    echo "up to date"
+  fi
+}
+
+run_bundle_cleanup() {
+  local brewfile="$1"
   brew bundle cleanup --file "$brewfile"
   if [ -n "${BREW_CLEANUP:-}" ]; then
     echo "Cleaning up..."
     brew bundle cleanup --file "$brewfile" --force
   else
-    echo "Rerun with BREW_CLEANUP=1 to apply"
+    echo 'Rerun rcup with `BREW_CLEANUP=1 rcup` to apply'
   fi
-  touch "$status_file"
-else
-  echo "up to date"
-fi
+}
+
+run_brew_bundle

@@ -18,13 +18,16 @@ read -r -d '' PARAMS_DEFAULT <<'EOT'
 EOT
 
 function write_git_parameters() {
-  local params_path="${HOME}/.config/git/parameters"
+  echo -n "Checking for git parameters... "
 
+  local params_path="${HOME}/.config/git/parameters"
   if [ -e "$params_path" ]; then
+    echo "present"
     return
   fi
 
-  echo "$PARAMS_DEFAULT" > "$params_path"
+  echo "not found, initializing..."
+  echo "$PARAMS_DEFAULT" >"$params_path"
   echo "Wrote ${params_path}"
   echo "Edit to specify machine-specific git configuration"
 }

@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
 
 # Exit immediately on error
-set -e
-
-LOCAL="${HOME}/.local"
-FZF_HOME="${LOCAL}/lib/fzf"
+set -euo pipefail
 
 install_fzf() {
-  echo "Installing FZF…"
-  git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_HOME"
-  "${FZF_HOME}/install" --bin
-  ln -s ../lib/fzf/bin/fzf "${LOCAL}/bin/fzf"
-  echo "FZF installed"
+  echo -n "Checking for fzf... "
+
+  local local="${HOME}/.local"
+  local fzf_home="${local}/lib/fzf"
+  if [ -d "$fzf_home" ]; then
+    echo "present"
+    return
+  fi
+
+  echo "not found, installing..."
+  git clone --depth 1 https://github.com/junegunn/fzf.git "$fzf_home"
+  "${fzf_home}/install" --bin
+  ln -s ../lib/fzf/bin/fzf "${local}/bin/fzf"
+  echo "Installed fzf"
 }
 
-if [ ! -d "$FZF_HOME" ]; then
-  install_fzf
-fi
+install_fzf

@@ -1,24 +1,33 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-# Install the vundle plugin if it's not already present.
-if [ ! -e "${HOME}/.vim/bundle/vundle" ]; then
-  mkdir -p "${HOME}/.vim/bundle"
-  git clone 'https://github.com/gmarik/vundle.git' \
-    "${HOME}/.vim/bundle/vundle"
-fi
+run_vundle() {
+  # Install the vundle plugin if it's not already present.
+  if [ ! -e "${HOME}/.vim/bundle/vundle" ]; then
+    echo -n "Installing vundle... "
+    mkdir -p "${HOME}/.vim/bundle"
+    git clone 'https://github.com/gmarik/vundle.git' \
+      "${HOME}/.vim/bundle/vundle"
+    ehco "done"
+  fi
 
-# The 'bundlesupdated' file is touched each time we install/update bundles (via
-# this hook). If that file doesn't exist or one of the bundles files has been
-# modified more recently, then we need to install/update. This prevents
-# 'BundleInstall' from running every time 'rcup' is invoked.
-status_file="${HOME}/.local/var/bundlesupdated"
-bundles_file="${HOME}/.local/etc/vimrc.bundles"
-bundle_local_file="${bundles_file}.local"
-if [ ! -e "${status_file}" ] || \
-  [ "${bundles_file}" -nt "${status_file}" ] || \
-  [ "${bundle_local_file}" -nt "${status_file}" ]
-then
-  # -E stops vim from complaining about input not coming from a terminal.
-  vim -E -u "${bundles_file}" +PluginInstall +qall
-  touch "${status_file}"
-fi
+  echo -n "Checking vim bundles..."
+
+  status_file="${HOME}/.local/var/bundlesupdated"
+  bundles_file="${HOME}/.local/etc/vimrc.bundles"
+  bundle_local_file="${bundles_file}.local"
+  if
+    [ ! -e "${status_file}" ] || \
+    [ "${bundles_file}" -nt "${status_file}" ] || \
+    [ "${bundle_local_file}" -nt "${status_file}" ]
+  then
+    echo -n "outdated, running vundle... "
+    # -E stops vim from complaining about input not coming from a terminal.
+    vim -E -u "${bundles_file}" +PluginInstall +qall
+    touch "${status_file}"
+    echo "done"
+  else
+    echo "up to date"
+  fi
+}
+
+run_vundle

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 function find_defined_tags() {
   local dotfiles_dirs=${DOTFILES_DIRS:="${HOME}/.dotfiles"}
   local tags=()
@@ -12,13 +14,18 @@ function find_defined_tags() {
 }
 
 function write_rcrc() {
+  echo -n "Checking for ~/.rcrc... "
+
   local defined_tags=$(find_defined_tags)
   local rcrc=${RCRC:="${HOME}/.rcrc"}
 
   if [ -e "$rcrc" ]; then
+    echo "present"
     return
   fi
 
+  echo "not found"
+  echo
   echo "It looks like you don't have an .rcrc set up. You can silence this"
   echo "warning with:"
   echo
