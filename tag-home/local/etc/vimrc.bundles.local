@@ -3,3 +3,4 @@ Plugin 'vim-scripts/a.vim'
 
 " Language-specific plugins.
 Plugin 'rust-lang/rust.vim'
+Plugin 'vale1410/vim-minizinc'
