@@ -13,7 +13,7 @@
 	staged = diff --cached --stat
 	log1 = log --date=iso --pretty='%C(auto)%h%Creset %ad %<(12,trunc)%aN %s'
 	logme = log --author=Shawn --pretty='%C(auto)%h%Creset %<(12,trunc)%ai %s'
-	logmsg = log --format='format:%B'
+	logmsg = log --format='format:%B' --reverse
 	changes = diff-index --name-only -r --diff-filter=ACMR HEAD
 	clean-npm = checkout -- '**/package-lock.json'
 
