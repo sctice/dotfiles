@@ -1,3 +1,5 @@
 directory: ~/Music/Beets
 library: ~/Music/Beets/library.db
-plugins: [fetchart, embedart, duplicates]
+paths:
+  singleton: $albumartist/$title
+plugins: [info, fetchart, embedart, duplicates]
