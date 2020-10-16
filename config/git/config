@@ -2,6 +2,7 @@
 	co = checkout
 	c = commit
 	derp = commit --amend --reuse-message HEAD
+	yolo = push --force-with-lease
 	st = status
 	b = branch
 	sm = submodule
