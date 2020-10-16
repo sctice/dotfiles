@@ -24,6 +24,9 @@ noremap <Leader>h :set hlsearch! hlsearch?<CR>
 " Toggle paste mode.
 noremap <Leader>p :set paste! paste?<CR>
 
+" Toggle spell mode.
+noremap <Leader>; :set spell! spell?<CR>
+
 " Toggle relative numbering and normal line numbering
 noremap <Leader>r :set relativenumber!<CR>
 

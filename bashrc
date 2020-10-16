@@ -57,9 +57,9 @@ export PATH="${HOME}/.local/bin:${PATH}"
 # titles with each new prompt. We do this because systems often do this
 # differently, and we'd like the same style across terminal tabs when some are
 # local and others are connected to a remote host.
-export MY_PS1=$(expand_prompt '<WIN><CYA>\A <MAG>\u<GRY>@<MAG>\h <BLU>\W <RED>[\j] <GRY>❚<NUL> ')
+export MY_PS1=$(expand_prompt '<WIN><CYA>\A <MAG>\u<GRY>@<MAG>\h <BLU>\W <RED>[\j] <GRY>❯<NUL> ')
 export PS1="$MY_PS1"
-export MY_PS2=$(expand_prompt '<GRY>...❚<NUL> ')
+export MY_PS2=$(expand_prompt '<GRY>...❯<NUL> ')
 export PS2="$MY_PS2"
 
 # Explicitly set the editor so git (and others) will use our own vim.
