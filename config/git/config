@@ -16,6 +16,7 @@
 	logme = log --author=Shawn --pretty='%C(auto)%h%Creset %<(12,trunc)%ai %s'
 	logmsg = log --format='format:%B' --reverse
 	changes = diff-index --name-only -r --diff-filter=ACMR HEAD
+	ignored = ls-files --exclude-standard --others --ignored
 	clean-npm = checkout -- '**/package-lock.json'
 
 [diff]
