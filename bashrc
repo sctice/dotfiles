@@ -91,10 +91,12 @@ if [ -n "$TMUX" ]; then
   alias ssh='TERM=xterm-256color ssh'
 fi
 
-# Allow local bashrc to override settings from above.
-if [ -r ~/.local/etc/bashrc.local ]; then
-  source ~/.local/etc/bashrc.local
-fi
+# Allow local bashrcs to override settings from above. Note the process
+# substitution to avoid a pipeline, which would cause the loop body to happen
+# in a subshell, where it wouldn't affect *this* shell.
+while read local_bashrc; do
+  source "$local_bashrc"
+done < <(find ~/.local/etc/ -name 'bashrc.*')
 
 # A shortcut to interactively select a tmux session using fuzzy find and attach
 # to the session.

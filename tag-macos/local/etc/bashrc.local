@@ -10,29 +10,7 @@ if type brew &>/dev/null; then
   fi
 fi
 
-# For use by the lister and finder utilities; ignore these
-export SQUELCH=$(implode : \
-  node_modules vendor \
-  __pycache__ '*.pyc' \
-  renv \
-  bower_components \
-)
-
-# Like PATH, but for changing directories.
-export CDPATH=".:~:~/Shelf:~/Projects"
-
 # Initialize rbenv to override system ruby.
 eval "$(rbenv init -)"
-
-# If we have GNU ls installed, use it to group directories first.
-if hash gls 2>/dev/null; then
-  alias ls='gls -h --color=auto --group-directories-first'
-else
-  alias ls='ls -Gh'
-fi
-
-alias cdd='cd ~/Desktop'
-alias cdb='cd ~/Dropbox/Shawn/Sync/Brain'
-alias cdk='cd ~/Dropbox/Shawn/Sync/Keep'
 
 # vim: sw=2 ts=2 sts=2 ft=bash
