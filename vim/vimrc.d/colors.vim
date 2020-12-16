@@ -20,5 +20,4 @@ augroup CustomHighlights
   autocmd ColorScheme * call ApplyCustomHighlights()
 augroup END
 
-" Enforce the default color scheme.
-colorscheme default
+call ApplyCustomHighlights()
