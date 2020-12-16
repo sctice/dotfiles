@@ -3,21 +3,45 @@
 # Exit immediately on error
 set -euo pipefail
 
-install_fzf() {
+local="${HOME}/.local"
+fzf_home="${local}/lib/fzf"
+repo=https://github.com/junegunn/fzf.git
+
+function main() {
   echo -n "Checking for fzf... "
 
-  local local="${HOME}/.local"
-  local fzf_home="${local}/lib/fzf"
   if [ -d "$fzf_home" ]; then
-    echo "present"
-    return
+    echo "Present"
+    update_fzf
+  else
+    echo "Missing"
+    install_fzf
   fi
+}
 
-  echo "not found, installing..."
-  git clone --depth 1 https://github.com/junegunn/fzf.git "$fzf_home"
+function install_fzf() {
+  echo "Installing fzf..."
+  git clone --depth 1 "$repo" "$fzf_home"
   "${fzf_home}/install" --bin
-  ln -s ../lib/fzf/bin/fzf "${local}/bin/fzf"
+  ln -fns ../lib/fzf/bin/fzf "${local}/bin/fzf"
   echo "Installed fzf"
 }
 
-install_fzf
+function update_fzf() {
+  (
+    echo -n "Checking for more recent fzf... "
+    cd "$fzf_home"
+    git fetch
+    if [ -z "$(git log --oneline origin/master...)" ]; then
+      echo "At latest"
+      return
+    fi
+    echo "Update available"
+    echo "Updating fzf..."
+    git merge --ff origin/master
+    ./install --bin
+    echo "Updated fzf"
+  )
+}
+
+main

@@ -7,10 +7,10 @@ run_vundle() {
     mkdir -p "${HOME}/.vim/bundle"
     git clone 'https://github.com/gmarik/vundle.git' \
       "${HOME}/.vim/bundle/vundle"
-    ehco "done"
+    echo "Done"
   fi
 
-  echo -n "Checking vim bundles..."
+  echo -n "Checking vim bundles... "
 
   status_file="${HOME}/.local/var/bundlesupdated"
   bundles_file="${HOME}/.local/etc/vimrc.bundles"
@@ -20,13 +20,13 @@ run_vundle() {
     [ "${bundles_file}" -nt "${status_file}" ] || \
     [ "${bundle_local_file}" -nt "${status_file}" ]
   then
-    echo -n "outdated, running vundle... "
+    echo -n "Outdated, running vundle... "
     # -E stops vim from complaining about input not coming from a terminal.
     vim -E -u "${bundles_file}" +PluginInstall +qall
     touch "${status_file}"
-    echo "done"
+    echo "Done"
   else
-    echo "up to date"
+    echo "Up to date"
   fi
 }
 

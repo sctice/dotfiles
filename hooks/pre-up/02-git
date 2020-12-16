@@ -22,11 +22,12 @@ function write_git_parameters() {
 
   local params_path="${HOME}/.config/git/parameters"
   if [ -e "$params_path" ]; then
-    echo "present"
+    echo "Present"
     return
   fi
 
   echo "not found, initializing..."
+  mkdir -p $(dirname "$params_path")
   echo "$PARAMS_DEFAULT" >"$params_path"
   echo "Wrote ${params_path}"
   echo "Edit to specify machine-specific git configuration"

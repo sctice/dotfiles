@@ -4,4 +4,4 @@
 echo -n "Ensuring required directories exist... "
 mkdir -p "${HOME}/.local/var"
 mkdir -p "${HOME}/.vim/bundle"
-echo "done"
+echo "Done"
