@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+set -ueo pipefail
+
+# Finds and reports project directories under the supplied directories
+# (defaulting to the current directory) that aren't version-controlled,
+# fully-committed, and pushed to a remote. For each project that fails some
+# check, an error is written on the standard output with the project directory
+# and an error message indicating which check failed.
+#
+# Exits with the number of detected errors.
+#
+# Examples:
+#
+#   find-dirty-projects
+#   find-dirty-projects ifixit
+#
+
+ERRORS=$(mktemp -u "$TMPDIR"/find-dirty-projects.XXX)
+trap "rm -f $ERRORS" EXIT
+mkfifo "$ERRORS"
+
+BLACKLIST='
+Projects/ifixit
+Projects/marisa
+'
+
+main() {
+  # A pipeline where writing a path to standard output passes it on to the next
+  # check.
+  list_projects "$@" \
+    | check blacklist \
+    | check no_vcs \
+    | check dirty_vcs \
+    | check no_remote \
+    | check unpushed_commits \
+    | collect &
+
+  # The read on ERRORS has a chance to EOF each time someone writes to the FIFO
+  # and then closes it. So keep trying to read until we hit an explicit "." in
+  # the error stream, which indicates that we're done.
+  local num_errors=0
+  while true; do
+    while read error <"$ERRORS"; do
+      if [ "$error" = "." ]; then
+        break 2
+      fi
+      num_errors=$((num_errors + 1))
+      echo "$error"
+    done
+  done
+
+  exit $num_errors
+}
+
+list_projects() {
+  find "${@:-.}" -mindepth 1 -maxdepth 1 -type d
+}
+
+check() {
+  local check_fn="$1"
+  while read dir; do
+    "$check_fn" "$dir"
+  done
+}
+
+blacklist() {
+  local reldir
+  reldir=$(realpath --relative-to "$HOME" "$1")
+  if ! grep -Fxqi -e "$reldir" <<<"$BLACKLIST"; then
+    pass "$1"
+  fi
+}
+
+no_vcs() {
+  if [ ! -d "$1/.git" ]; then
+    fail "no version control" "$1"
+  else
+    pass "$1"
+  fi
+}
+
+dirty_vcs() {
+  if [ -n "$(git -C "$1" status --porcelain)" ]; then
+    fail "uncommitted changes" "$1"
+  else
+    pass "$1"
+  fi
+}
+
+no_remote() {
+  if [ -z "$(git -C "$1" remote)" ]; then
+    fail "no remote" "$1"
+  else
+    pass "$1"
+  fi
+}
+
+unpushed_commits() {
+  unpushed=$(
+    git -C "$1" log \
+      --branches --not --remotes \
+      --simplify-by-decoration --no-decorate --oneline
+  )
+  if [ -n "$unpushed" ]; then
+    fail "unpushed commits" "$1"
+  else
+    pass "$1"
+  fi
+}
+
+collect() {
+  # First collect all of the pipeline output, then signal the end of the ERRORS
+  # stream.
+  cat - >/dev/null
+  echo . >"$ERRORS"
+}
+
+pass() {
+  echo "$1"
+}
+
+fail() {
+  local message="$1"
+  local dir="$2"
+  printf "%-30s %s\n" "$dir" "$message" >"$ERRORS"
+}
+
+main "$@"
