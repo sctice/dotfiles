@@ -78,6 +78,8 @@ export LESS='-R -F -X -+S'
 # through `squelch`.
 export FZF_DEFAULT_COMMAND=flist-git
 
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
+
 # Aliases
 
 alias ll='ls -l'
