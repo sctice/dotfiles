@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+function main() {
+  ensure_rcrc
+  ensure_rcm || exit 1
+  rcup
+}
+
+# Set by ask_for_tags
+selected_tags=
+
+function ensure_rcrc() {
+  local defined_tags=$(find_defined_tags)
+  local rcrc=${RCRC:="${HOME}/.rcrc"}
+
+  echo -n "Checking for .rcrc at $rcrc... "
+
+  if [ -e "$rcrc" ]; then
+    echo "Present"
+    return
+  fi
+
+  echo "not found"
+  echo
+  echo "You don't have an .rcrc set up. Let's initialize one."
+
+  touch "$rcrc"
+
+  ask_for_tags "$defined_tags"
+
+  if [ -n "$selected_tags" ]; then
+    local rcrc_tags="TAGS=$selected_tags"
+    echo "Writing $rcrc_tags"
+    echo $rcrc_tags >"$rcrc"
+  fi
+}
+
+function find_defined_tags() {
+  local dotfiles_dirs=${DOTFILES_DIRS:="${HOME}/.dotfiles"}
+  local tags=()
+  for dotfiles_dir in $dotfiles_dirs; do
+    for tag_dir in $(find "${dotfiles_dir}" -maxdepth 1 -name 'tag-*'); do
+      tags+=("${tag_dir##*/tag-}")
+    done
+  done
+  echo -n "${tags[@]}"
+}
+
+function ask_for_tags() {
+  echo
+  echo "Select space-separated tags to apply to this instance or an empty"
+  echo "string to skip setting tags."
+  echo
+
+  if [ -n "$defined_tags" ]; then
+    echo "Available tags: ${defined_tags}"
+  fi
+
+  while true; do
+    echo -n "TAGS="
+    read selected_tags
+    if [ -z "$selected_tags" ]; then
+      return
+    fi
+    local invalid=
+    for tag in $selected_tags; do
+      if [[ ! " ${defined_tags[@]} " =~ " ${tag} " ]]; then
+        echo "Unrecognized tag: $tag"
+        invalid=1
+      fi
+    done
+    if [ ! $invalid ]; then
+      break
+    fi
+  done
+}
+
+function ensure_rcm() {
+  echo -n "Checking for rcm..."
+  if type rcup &>/dev/null; then
+    echo "Present"
+    return
+  elif type apt &>/dev/null; then
+    echo "Missing, installing with apt"
+    sudo apt install --yes rcm
+    return
+  fi
+  echo "Missing"
+  echo
+  echo "I don't know how to install rcm automatically. Please install"
+  echo "it yourself and then try again".
+  return 1
+}
+
+main "$@"
