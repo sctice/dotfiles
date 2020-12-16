@@ -1,3 +1,0 @@
-[submodule "local/lib/pathmatcher"]
-	path = local/lib/pathmatcher
-	url = git@github.com:sctice/pathmatcher.git
