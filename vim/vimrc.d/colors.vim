@@ -1,3 +1,32 @@
+" Calling :colorscheme appears to override automatic detection of the
+" background color and simply default to a light background. This gives us an
+" easy way to specify a lasting override without pushing a config change. On
+" startup, we set 'background' from ~/.local/var/vimbg (if it exists and the
+" first line is either 'light' or 'dark'). The sticky setting can be changed
+" with `:BG dark|light` (replaces the file contents).
+
+let s:vimbg = expand('~/.local/var/vimbg')
+
+function! SetVimbg(bg)
+  if a:bg !~ "^dark\\|light$"
+    echoerr 'Background must be "light" or "dark"'
+    return
+  endif
+  call writefile([a:bg], s:vimbg)
+  call SetBackgroundFromVimbg()
+endfunction
+command! -nargs=1 BG call SetVimbg('<args>')
+
+function! SetBackgroundFromVimbg()
+  if filereadable(s:vimbg)
+    let l:bg = readfile(s:vimbg, '', 1)
+    if len(l:bg) && l:bg[0] =~ '^dark\|light$'
+      exec 'set background=' . l:bg[0]
+    endif
+  endif
+endfunction
+call SetBackgroundFromVimbg()
+
 " Loading color schemes and setting the background color clear out existing
 " highlights, so in order to define our own highlights that will stick as we
 " change the background or color scheme, we need to re-run them each time a
@@ -20,4 +49,6 @@ augroup CustomHighlights
   autocmd ColorScheme * call ApplyCustomHighlights()
 augroup END
 
-call ApplyCustomHighlights()
+" Set up our preferred color scheme.
+
+colo PaperColor

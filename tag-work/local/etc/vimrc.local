@@ -1,32 +1,3 @@
 " Remove the system's default position-restoring logic because it doesn't
 " exclude commit files.
 autocmd! fedora BufReadPost
-
-" Vim running over SSH can't automatically detect the background color and
-" defaults to a light background. This gives us an easy way to specify a
-" lasting override without pushing a config change. On startup, we set
-" 'background' from ~/.local/var/vimbg (if it exists and the first line is
-" either 'light' or 'dark'). The sticky setting can be changed with `:BG
-" dark|light` (replaces the file contents).
-
-let s:vimbg = expand('~/.local/var/vimbg')
-
-function! SetVimbg(bg)
-  if a:bg !~ "^dark\\|light$"
-    echoerr 'Background must be "light" or "dark"'
-    return
-  endif
-  call writefile([a:bg], s:vimbg)
-  call SetBackgroundFromVimbg()
-endfunction
-command! -nargs=1 BG call SetVimbg('<args>')
-
-function! SetBackgroundFromVimbg()
-  if filereadable(s:vimbg)
-    let l:bg = readfile(s:vimbg, '', 1)
-    if len(l:bg) && l:bg[0] =~ '^dark\|light$'
-      exec 'set background=' . l:bg[0]
-    endif
-  endif
-endfunction
-call SetBackgroundFromVimbg()

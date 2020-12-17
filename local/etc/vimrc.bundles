@@ -27,6 +27,9 @@ Plugin 'vim-scripts/ctags.vim'
 Plugin 'vim-scripts/renamer.vim'
 Plugin 'yssl/QFEnter'
 
+" Color schemes.
+Plugin 'NLKNguyen/papercolor-theme'
+
 " Language-specific plugins.
 Plugin 'StanAngeloff/php.vim'
 Plugin 'fgsch/vim-varnish'
