@@ -1,3 +1,8 @@
+# In /etc/commonrc (sourced below), we define a global sd() function to change
+# to the current directory but under a different user, and that conflicts with
+# the alias set up by fasd.
+unalias sd
+
 # Source system definitions. These aren't sourced automatically by bash,
 # whether the session is interactive or not.
 if [ -f /etc/bashrc ]; then
@@ -40,6 +45,7 @@ shopt -s histappend
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
 
 # Aliases
+
 
 # Human sizes, coloring, display directories first
 alias ls='ls -h --color=auto --group-directories-first'
