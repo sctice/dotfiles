@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Exit immediately on error
+set -euo pipefail
+
+local="${HOME}/.local"
+fasd_home="${local}/lib/fasd"
+repo=https://github.com/clvv/fasd.git
+
+function main() {
+  echo -n "Checking for fasd... "
+
+  if [ -d "$fasd_home" ]; then
+    echo "Present"
+    update_fasd
+  else
+    echo "Missing"
+    install_fasd
+  fi
+}
+
+function install_fasd() {
+  echo "Installing fasd..."
+  git clone --depth 1 "$repo" "$fasd_home"
+  ( cd "$fasd_home" && PREFIX="$local" make install; )
+  echo "Installed fasd"
+}
+
+function update_fasd() {
+  (
+    echo -n "Checking for more recent fasd... "
+    cd "$fasd_home"
+    git fetch
+    if [ -z "$(git log --oneline origin/master...)" ]; then
+      echo "At latest"
+      return
+    fi
+    echo "Update available"
+    echo "Updating fasd..."
+    git merge --ff origin/master
+    PREFIX="$local" make install
+    echo "Updated fasd"
+  )
+}
+
+main
