@@ -30,6 +30,7 @@ call s:loadrc("matchit")      " Make % bounce between more things
 call s:loadrc("slime")        " Interact with REPLs
 call s:loadrc("custom-grep")  " Grep with temp grepprg replacement
 call s:loadrc("rcedit")       " Edit vimrc
+call s:loadrc("pencil")       " For writing markdown (and maybe other things)
 
 " Context overrides: settings for a specific environment.
 
