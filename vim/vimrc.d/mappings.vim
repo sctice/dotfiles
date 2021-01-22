@@ -1,6 +1,17 @@
 " Mappings of various sorts, broken out into sections by mode.
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Input
+
+" Create 3 new lines and put the cursor in the middle one.
+inoremap <C-J> <C-o>o<C-o>O<CR>
+nnoremap <C-J> o<C-o>O<CR>
+
+" Insert date stamps
+inoremap <expr> xxds strftime("%Y%m%d%H%M%S")
+inoremap <expr> xxd strftime("%Y-%m-%d")
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Normal
 
 " Various broadly-applicable leader-triggered actions in alphabetical order,

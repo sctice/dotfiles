@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# E.g., '- [1!] Finish notes plugin' (note the single quotes)
+item="$1"
+# E.g., /absolute/path/to/done.md
+done_path="$2"
+
+sunday=$(date -d "sunday" "+%Y-%m-%d")
+
+# Match a date heading for next Sunday (or today, if today is Sunday) at the
+# beginning of the file. If we find the heading, print the next (blank) line,
+# and then append $item; otherwise, insert the date heading, a blank line, and
+# $item, and branch to the end. Pass through all other file lines.
+sed -i -e "
+  1 {
+    s/^## $sunday/&/
+    tx
+    i\\
+## $sunday\\n\\n$item\\n
+    b
+    :x
+    N
+    a\\
+$item
+  }
+" "$done_path"

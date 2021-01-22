@@ -1,6 +1,14 @@
 " Generic plugins useful in a variety of situations.
+
+Plugin 'jiangmiao/auto-pairs'
 Plugin 'vim-scripts/a.vim'
 
+" The netrw bundled with the current Vim can't currently open links in the
+" preferred browser with `gx`.
+Plugin 'eiginn/netrw'
+
 " Language-specific plugins.
+
+Plugin 'plasticboy/vim-markdown'
 Plugin 'rust-lang/rust.vim'
 Plugin 'vale1410/vim-minizinc'
