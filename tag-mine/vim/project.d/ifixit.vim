@@ -9,7 +9,7 @@ autocmd! BufNewFile,BufRead scp://com/{Code,Checkouts}/* TabLocal 3
 
 " Provide a convenient search when we're in our queries repo.
 function! SetupIfixitQueries()
-  if getcwd() =~# '/ifixit/queries$'
+  if getcwd() =~# '/ifixit/sql$'
     command! -nargs=+ SQL CG ./findsql <args>
   endif
 endfunction
