@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+notes_dir="${1:-~/Dropbox/Shawn/Sync/Brain}"
+note=${2:-todo.md}
+
+function main() {
+  local winid=
+  winid=$(find_window)
+  if [ -n "$winid" ]; then
+    activate_window "$winid"
+  else
+    launch_editor
+  fi
+}
+
+function find_window() {
+  wmctrl -l | grep "$notes_dir" | awk '{print $1}'
+}
+
+function activate_window() {
+  local winid="$1"
+  echo "$winid"
+  wmctrl -ia "$winid"
+}
+
+function launch_editor() {
+  local notes_dir_expanded="${notes_dir//\~/$HOME}"
+  gvim -c "cd $notes_dir_expanded" -f "${notes_dir_expanded}/${note}"
+}
+
+main "$@"

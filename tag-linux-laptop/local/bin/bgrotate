@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+
+BG_SCHEME=lowave
+
+LOFI_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Lofi"
+VAPORWAVE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Vaporwave"
+NATURE_BASE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Nature"
+
+function main() {
+  if [[ "$1" = "-l" ]]; then
+    list_backgrounds
+    return
+  fi
+
+  target_bg_uri=$(select_${BG_SCHEME}_background)
+  actual_bg_uri=$(gsettings get org.gnome.desktop.background picture-uri)
+  if [[ "$target_bg_uri" != "$actual_bg_uri" ]]; then
+    gsettings set org.gnome.desktop.background picture-uri "$target_bg_uri"
+  fi
+}
+
+function list_backgrounds() {
+  today=$(select_${BG_SCHEME}_background)
+  for bg in $(select_${BG_SCHEME}_background all); do
+    if [ "$bg" = "$today" ]; then
+      echo "* $bg"
+    else
+      echo "  $bg"
+    fi
+  done
+}
+
+function select_lowave_background() {
+  if [[ $(select_ampm) = "am" ]]; then
+    bg_dir="$LOFI_DIR"
+  else
+    bg_dir="$VAPORWAVE_DIR"
+  fi
+  start_date=$(date "+%Y-01-01")
+  select_background "$bg_dir" "$start_date" "$1"
+}
+
+function select_ampm() {
+  now=$(date "+%H")
+  if [[ "$now" < "12" ]]; then
+    echo "am"
+  else
+    echo "pm"
+  fi
+}
+
+function select_nature_background() {
+  IFS=$'\t' read bg_subdir start_date < <(select_season)
+  bg_dir="$NATURE_BASE_DIR/$bg_subdir"
+  select_background "$bg_dir" "$start_date" "$1"
+}
+
+function select_season() {
+  today=$(date "+%m%d")
+  if   [[ "$today" < "0320" || "$today" > "1220" ]]; then
+    year=
+    if [[ "$today" < "1221" ]]; then
+      # `date` assumes the current year, which generally works for us except
+      # for winter, which spans the transition between years.
+      year=$(date --date "last year" "+ %Y")
+    fi
+    echo -e "1-Winter\tDec 21${year}"
+  elif [[ "$today" < "0620" ]]; then
+    echo -e "2-Spring\tMar 20"
+  elif [[ "$today" < "0922" ]]; then
+    echo -e "3-Summer\tJun 20"
+  else
+    echo -e "4-Fall\tSep 22"
+  fi
+}
+
+function select_background() {
+  bg_dir="$1"
+  start_date="$2"
+  all="$3"
+  backgrounds=$(shuffle_backgrounds "$bg_dir" "$start_date")
+  if [ "$all" = "all" ]; then
+    echo "$backgrounds"
+    return
+  fi
+  num_backgrounds=$(wc -l <<<"$backgrounds")
+  elapsed_days=$(days_since "$start_date")
+  offset=$(($elapsed_days % "$num_backgrounds" + 1))
+  sed -ne "${offset}p" <<<"$backgrounds"
+}
+
+function shuffle_backgrounds() {
+  local bg_dir="$1"
+  local start_date="$2"
+  list_backgrounds_with_random_index "$bg_dir" "$start_date" \
+    | sort -n | awk -F "\t" '{print $2}'
+}
+
+function list_backgrounds_with_random_index() {
+  local bg_dir="$1"
+  local start_date="$2"
+  RANDOM=$(date --date "$start_date" +"%Y%m%d")
+  while read bg_filename; do
+    RANDOM=$(generate_seed "$start_date-$bg_filename")
+    printf "%d\t%s\n" $RANDOM $bg_dir/$bg_filename
+  done < <(ls "$bg_dir")
+}
+
+function generate_seed() {
+  local hashed_value=$(md5sum <<<"$1" | awk '{print $1}')
+  echo $((16#$hashed_value % 32768))
+}
+
+function days_since() {
+  date_format="+%Y-%m-%d"
+  end_date=$(date "$date_format")
+  start_date=$(date --date "$1" "$date_format")
+  day_diff "$end_date" "$start_date"
+}
+
+function day_diff() {
+  end_ts=$(date -d "$1 UTC" +%s)
+  start_ts=$(date -d "$2 UTC" +%s)
+  echo $(( ($end_ts - $start_ts) / 86400 ))
+}
+
+main "$@"

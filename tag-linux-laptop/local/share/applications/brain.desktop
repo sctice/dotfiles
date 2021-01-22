@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Brain
+GenericName=Notes
+Comment=Manage personal notes and todo list
+Categories=Utility;TextEditor;
+Keywords=Todo;Notes;
+Icon=brain
+Type=Application
+Terminal=false
+StartupNotify=true
+TryExec=gvim
+Exec=goto-notes "~/Dropbox/Shawn/Sync/Brain" todo.md

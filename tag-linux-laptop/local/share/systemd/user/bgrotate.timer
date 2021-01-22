@@ -1,0 +1,11 @@
+[Unit]
+Description=Desktop background rotation timer
+
+[Timer]
+OnStartupSec=5s
+OnCalendar=*-*-* 00,17:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+

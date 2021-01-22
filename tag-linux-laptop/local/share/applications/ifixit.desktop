@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=iFixit
+GenericName=Notes
+Comment=Manage iFixit notes and todo list
+Categories=Utility;TextEditor;
+Keywords=Todo;Notes;
+Icon=screw
+Type=Application
+Terminal=false
+StartupNotify=true
+TryExec=gvim
+Exec=goto-notes "~/Dropbox/Shawn/Sync/iFixit" todo.md

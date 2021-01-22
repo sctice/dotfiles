@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+device_id=$(bluetoothctl devices | awk '/WONDERBOOM 2/ {print $2}')
+
+if [ "$1" = "off" ]; then
+  bluetoothctl disconnect "$device_id"
+else
+  bluetoothctl connect "$device_id"
+fi

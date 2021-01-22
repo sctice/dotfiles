@@ -1,0 +1,6 @@
+[Unit]
+Description=Desktop background rotation service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/bgrotate

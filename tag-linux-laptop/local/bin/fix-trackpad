@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+
+# The trackpad on my galp5 becomes completely unresponsive from time to time. I
+# don't know why. Running this script with, e.g.:
+#
+#   Alt+F2, then `pkexec fix-trackpad`
+#
+# should fix the issue (at least on the galp5). So far, I've tried the
+# following to prevent the trackpad from freezing in the first place without
+# success:
+#
+#  - Turn off "Touchpad: Disable While Typing"
+#
+# https://askubuntu.com/a/978159 did it for me.
+
+sudo modprobe -r hid_multitouch && sudo modprobe hid_multitouch
