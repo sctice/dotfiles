@@ -16,7 +16,7 @@ set -ueo pipefail
 #   find-dirty-projects ifixit
 #
 
-ERRORS=$(mktemp -u "$TMPDIR"/find-dirty-projects.XXX)
+ERRORS=$(mktemp -d -u find-dirty-projects.XXX)
 trap "rm -f $ERRORS" EXIT
 mkfifo "$ERRORS"
 

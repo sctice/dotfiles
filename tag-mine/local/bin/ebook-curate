@@ -4,7 +4,7 @@ LIBRARY=${EBOOK_LIBRARY:-$HOME/Dropbox/Shawn/Shelf/Books/Ebooks}
 
 curate_metadata() {
   local epub="$1"
-  local tmp=$(mktemp -t metadata)
+  local tmp=$(mktemp -t metadata.XXX)
   trap "rm $tmp" EXIT
   fetch_metadata_into "$epub" "$tmp" || exit 1
   ${EDITOR:-vim} "$tmp" || exit 1
@@ -53,7 +53,7 @@ curate_cover() {
   local epub="$1"
   local cover_source="$2"
   if [ ! -r "$cover_source" ]; then
-    local tmpdir=$(mktemp -d -t cover)
+    local tmpdir=$(mktemp -d -t cover.XXX)
     trap "rm -rf $tmpdir" EXIT
     cover_source=$(fetch_cover_from_url "$cover_source" "$tmpdir")
   fi
