@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+require 'csv'
+
+module IngToYnab
+  def self.convert(path, out)
+    out << Transaction.header
+    Transaction.each(path) do |trx|
+      out << trx.to_ynab()
+    end
+  end
+
+  class Transaction
+    def self.each(path)
+      count = 0
+      CSV.new(
+        File.new(path),
+        col_sep: ";",
+        headers: true
+      ).each do |row|
+        yield Transaction.new(row)
+        count += 1
+      end
+      count
+    end
+
+    def self.header
+      ['Date', 'Payee', 'Memo', 'Outflow', 'Inflow'].to_csv
+    end
+
+    # <CSV::Row "Datum":"20170605"
+    # "Naam / Omschrijving":"Ingenico"
+    # "Rekening":"NL86INGB0686035143"
+    # "Tegenrekening":"NL39RABO0301242844"
+    # "Code":"GT"
+    # "Af Bij":"Af"
+    # "Bedrag (EUR)":"113,90"
+    # "MutatieSoort":"Internetbankieren"
+    # "Mededelingen":"Naam: Ingenico Omschrijving ...">
+    def initialize(row)
+      @date = Date.parse(row['Datum'])
+      @name = row['Naam / Omschrijving']
+      @type = row['Af Bij'] === 'Af' ? :outflow : :inflow
+      @amount = IngToYnab::parse_amount(row['Bedrag (EUR)'])
+      @memo = row['Mededelingen']
+      @outflow = self.type === :outflow ? self.amount : 0.00
+      @inflow = self.type === :inflow ? self.amount : 0.00
+    end
+
+    attr_reader :date, :name, :type, :amount, :memo, :outflow, :inflow
+
+    # Date,Payee,Memo,Outflow,Inflow
+    def to_ynab
+      [
+        @date.strftime('%Y-%m-%d'),
+        @name,
+        @memo,
+        sprintf('%.2f', @outflow),
+        sprintf('%.2f', @inflow),
+      ].to_csv
+    end
+  end
+
+  # Convert a string like "1.182,70" to a float like 1182.70
+  def self.parse_amount(str)
+    str.gsub('.', '').gsub(',', '.').to_f
+  end
+end
+
+begin
+  path = ARGV[0]
+  outfile = File.basename(path, '.*') + '.YNAB.csv'
+  outpath = File.join(File.dirname(path), outfile)
+  out = File.new(outpath, 'w')
+  IngToYnab.convert(path, out)
+  out.close()
+  puts outpath
+rescue Interrupt
+end
