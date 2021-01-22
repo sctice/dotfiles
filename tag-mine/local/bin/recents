@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# List files modified in the last 28 days along with the date of their
+# modification and the first line of their contents. The main use case is to
+# review recently-modified Brain files which mostly don't have obvious
+# filenames but do usually have a meaningful title on the first line. This is
+# why the space left for the filename is quite small.
+
+function main() {
+  find_recents | order_by_time_desc | while read path; do
+    mtime=$(get_mtime "$path" "%Y-%m-%dT%H:%M")
+    if file -b --mime "$path" | grep -qv "^text"; then
+      title="<binary>"
+    else
+      title=$(head -n1 "$path")
+    fi
+    filename=$(basename "$path")
+    filename_trunc="${filename:${#filename}<16?0:-16}"
+    printf "%s %32s  %s\n" "$mtime" "$filename_trunc" "${title:0:50}"
+  done
+}
+
+function find_recents() {
+  find . -type f -not -name '.*' -mtime -28
+}
+
+function order_by_time_desc() {
+  xargs ls -t
+}
+
+function get_mtime() {
+  case "$OSTYPE" in
+    linux*) get_mtime_linux "$@" ;;
+    darwin*) get_mtime_darwin "$@" ;;
+  esac
+}
+
+function get_mtime_darwin() {
+  local path="$1"
+  local format="$2"
+  mtime=$(stat --format '%m' "$path")
+  date -r "$mtime" "+$format"
+}
+
+function get_mtime_linux() {
+  local path="$1"
+  local format="$2"
+  mtime=$(stat --format '%Y' "$path")
+  date --date=@$mtime "+$format"
+}
+
+main "$@"
