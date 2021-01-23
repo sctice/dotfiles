@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Switch focus to the most recent gnome terminal window, if any; otherwise,
+# launch a new terminal window using x-terminal-emulator to (try to) pick the
+# system default (although maybe that's silly since we're only looking for
+# gnome terminal windows to switch to).
+
+TARGET_CLASS=gnome-terminal-server.Gnome-terminal
+
+function main() {
+  winids=$(list_windows $TARGET_CLASS)
+  if [ -z "$winids" ]; then
+    x-terminal-emulator
+    return
+  fi
+
+  winid=$(select_most_recent "$winids")
+  goto_window "$winid"
+}
+
+function list_windows() {
+  wm_class="$1"
+  wmctrl -xl | awk "/$wm_class/ {print \$1}"
+}
+
+function select_most_recent() {
+  candidate_winids="$1"
+  for recent_winid in $(list_windows_by_recency); do
+    for cand_winid in $candidate_winids; do
+      # xprop doesn't display leading zeros on hex window ids, but wmctrl does,
+      # so we convert both to decimal for comparison.
+      if [ "$((recent_winid))" = "$((cand_winid))" ]; then
+        echo "$cand_winid"
+        return
+      fi
+    done
+  done
+}
+
+function list_windows_by_recency() {
+  xprop -root \
+    | grep '^_NET_CLIENT_LIST_STACKING' \
+    | grep -o '0x.*' \
+    | tr -s ', ' "\n" \
+    | tac
+}
+
+function goto_window() {
+  wmctrl -ia "$1"
+}
+
+main "$@"
