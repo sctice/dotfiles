@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+BACKUP_VAR_DIR="${BACKUP_VAR_DIR:-$HOME/.local/etc/backup}"
+
+backend=
+declare -a backend_opts
+declare -a file_selection
+
+function main() {
+  if [ "$#" -lt 2 ]; then
+    echo "Usage: backup <command> <backend> [command-opt, ...]"
+    exit 1
+  fi
+
+  cmd="$1"; shift
+
+  case "$cmd" in
+    to) cmd=backup ;;
+    list-current | list | ls | lc) cmd=list_current ;;
+    status | st) cmd=show_status ;;
+    restore) cmd=restore ;;
+    remove-old | truncate | rmold) cmd=remove_old ;;
+    cleanup | clean) cmd=cleanup ;;
+    *) echo "unrecognized command: $cmd"; exit 1 ;;
+  esac
+
+  select_backend "$1"; shift
+  export_backend_env
+  set_backend_opts
+
+  "$cmd" "$@"
+}
+
+function select_backend() {
+  backend_path="${BACKUP_VAR_DIR}/$1"
+  if [ ! -r "$backend_path" ]; then
+    echo "cannot read backend definition: $backend_path"
+    exit 1;
+  fi
+  source "$backend_path"
+}
+
+function backup() {
+  set_file_selection
+  duplicity incremental \
+    "${backend_opts[@]}" \
+    --full-if-older-than $(full_if_older_than) \
+    --verbosity info \
+    "${file_selection[@]}" \
+    "$@" \
+    "$(local_dir)" "$(backend_uri)"
+}
+
+function list_current() {
+  duplicity list-current-files \
+    "${backend_opts[@]}" \
+    "$@" \
+    "$(backend_uri)"
+}
+
+function show_status() {
+  duplicity collection-status "$(backend_uri)"
+}
+
+function restore() {
+  # Pull off the last argument, which should be where to restore to.
+  args=( "$@" )
+  target_dir="${args[@]:(-1)}"
+  unset args[-1]
+  duplicity restore \
+    "${backend_opts[@]}" \
+    --verbosity info \
+    "${args[@]}" \
+    "$(backend_uri)" "$target_dir"
+}
+
+function remove_old() {
+  duplicity remove-all-but-n-full $(num_full_backups) \
+    "${backend_opts[@]}" \
+    "$@" \
+    "$(backend_uri)"
+}
+
+function cleanup() {
+  duplicity cleanup \
+    "${backend_opts[@]}" \
+    "$@" \
+    "$(backend_uri)"
+}
+
+# Backend configuration points ################################################
+
+function export_backend_env() {
+  true
+}
+
+# This function, if defined, should set `backend_opts` to an array of
+# arguments. See set_file_selection for the reasoning behind setting an array
+# instead of returning a string.
+function set_backend_opts() {
+  true
+}
+
+# This function should set `file_selection` to an array of arguments. We use an
+# array so that special shell characters (used for globbing in patters) can be
+# easily quoted where they're defined and expanded with "${file_selection[@]}".
+function set_file_selection() {
+  echo "no file selection set for backend: $backend"
+  exit 1
+}
+
+function full_if_older_than() {
+  echo 3M
+}
+
+function num_full_backups() {
+  echo 4
+}
+
+function local_dir() {
+  echo "no local dir set for backend: $backend"
+  exit 1
+}
+
+function backend_uri() {
+  echo "no backend URI set for backend: $backend"
+  exit 1
+}
+
+main "$@"
