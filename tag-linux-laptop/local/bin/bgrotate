@@ -31,22 +31,14 @@ function list_backgrounds() {
 }
 
 function select_lowave_background() {
-  if [[ $(select_ampm) = "am" ]]; then
+  now=$(date "+%H")
+  if [[ "$now" -lt "17" ]]; then
     bg_dir="$LOFI_DIR"
   else
     bg_dir="$VAPORWAVE_DIR"
   fi
   start_date=$(date "+%Y-01-01")
   select_background "$bg_dir" "$start_date" "$1"
-}
-
-function select_ampm() {
-  now=$(date "+%H")
-  if [[ "$now" < "12" ]]; then
-    echo "am"
-  else
-    echo "pm"
-  fi
 }
 
 function select_nature_background() {
