@@ -9,7 +9,7 @@ nnoremap <C-J> o<C-o>O<CR>
 
 " Insert date stamps
 inoremap <expr> xxds strftime("%Y%m%d%H%M%S")
-inoremap <expr> xxd strftime("%Y-%m-%d")
+inoremap <expr> xxt strftime("%Y-%m-%d")
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Normal
