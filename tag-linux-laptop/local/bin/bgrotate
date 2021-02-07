@@ -32,7 +32,7 @@ function list_backgrounds() {
 
 function select_lowave_background() {
   now=$(date "+%H")
-  if [[ "$now" -lt "17" ]]; then
+  if [[ "$now" < "17" ]]; then
     bg_dir="$LOFI_DIR"
   else
     bg_dir="$VAPORWAVE_DIR"
