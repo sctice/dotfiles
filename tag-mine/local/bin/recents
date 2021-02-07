@@ -6,8 +6,12 @@
 # filenames but do usually have a meaningful title on the first line. This is
 # why the space left for the filename is quite small.
 
+MTIME_DAYS=${MTIME_DAYS:-28}
+MAX_LEN_FILENAME=${MAX_LEN_FILENAME:-32}
+MAX_LEN_TITLE=${MAX_LEN_TITLE:-50}
+
 function main() {
-  find_recents | order_by_time_desc | while read path; do
+  find_recents "${1:-.}" | order_by_time_desc | while read path; do
     mtime=$(get_mtime "$path" "%Y-%m-%dT%H:%M")
     if file -b --mime "$path" | grep -qv "^text"; then
       title="<binary>"
@@ -15,13 +19,13 @@ function main() {
       title=$(head -n1 "$path")
     fi
     filename=$(basename "$path")
-    filename_trunc="${filename:${#filename}<16?0:-16}"
-    printf "%s %32s  %s\n" "$mtime" "$filename_trunc" "${title:0:50}"
+    filename_trunc="${filename:${#filename}<$MAX_LEN_FILENAME?0:-$MAX_LEN_FILENAME}"
+    printf "%s  %32s  %s\n" "$mtime" "$filename_trunc" "${title:0:$MAX_LEN_TITLE}"
   done
 }
 
 function find_recents() {
-  find . -type f -not -name '.*' -mtime -28
+  find "$1" -type f -not -name '.*' -mtime -$MTIME_DAYS
 }
 
 function order_by_time_desc() {
