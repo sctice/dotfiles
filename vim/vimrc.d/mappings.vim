@@ -44,6 +44,11 @@ noremap <Leader>r :set relativenumber!<CR>
 " Yank the entire document to the clipboard.
 noremap <Leader>Y :%yank+<CR>
 
+" Copy the contents of a register into another register (useful for copying
+" special registers, like % for the current file name). E.g. "ayr% to put the
+" contents of the % register into the `a` register.
+nnoremap <silent> yr :call setreg(v:register, getreg(nr2char(getchar())))<CR>
+
 " I often forget which terminal tab I'm in, and then I try to do <C-b><C-b> to
 " switch tmux panes, but that doesn't work because I'm not in tmux, and then
 " the native vim <C-b> scrolls my position. I never intend to use vim's <C-b>,
