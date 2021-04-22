@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+
+set -ueo pipefail
+
+shopt -s extglob
+
+REM_STATE_FILE=${REM_STATE_FILE:-"$HOME"/.local/var/rem.state}
+REM_DEFAULT_MSG=${REM_DEFAULT_MSG:-"Wake up, Neo…"}
+REM=$(realpath "$0")
+
+AT_DATE_FORMAT="+%H:%M %Y-%m-%d"
+
+# rem 5m
+# rem 5m Time to go
+# rem 15:59
+# rem 1h
+# rem 1h5m
+# rem 75m
+# rem [status]
+# rem del[ete] REMINDER_ID
+function main() {
+  case "${1:-}" in
+    ""|-*) show_status "$@" ;;
+    s|st|stat|status) shift; show_status "$@" ;;
+    [1-9]*([0-9])m) add_reminder_m "$@" ;;
+    [1-9]*([0-9])h) add_reminder_h "$@" ;;
+    [1-9]*([0-9])h@([1-9]|[1-5][0-9])m) add_reminder_hm "$@" ;;
+    @(?(0)[0-9]|1[0-9]|2[0-3]):[0-5][0-9]) add_reminder_time "$@" ;;
+    pop) shift; pop_reminder "$@" ;;
+    d|del|delete) shift; delete_reminder "$@" ;;
+  esac
+}
+
+function show_status() {
+  local curr_state
+  if [ ! -t 0 -o "${1:-}" = "-g" ]; then
+    _get_status | _display_gui_status
+  else
+    # We're in an interactive shell, so display text.
+    _get_status
+  fi
+}
+
+function _get_status() {
+  while IFS=$'\t' read jobid datetime msg; do
+    local display_time
+    display_time=$(date -d "$datetime" "+%H:%M")
+    time_left=$(_time_until "$datetime")
+    printf "%d\t%s\t%s\t%s\n" "$jobid" "$display_time" "$time_left" "$msg"
+  done < <(_update_state)
+}
+
+function _time_until() {
+  local endtime="$1"
+  local now
+  local delta
+  local n
+  now=$(date "+%s")
+  endtime=$(date -d "$endtime" "+%s")
+  delta=$(("$endtime" - "$now"))
+  if [ "$delta" -lt 60 ]; then
+    echo "${delta}s"
+    return
+  fi
+  if [ "$delta" -ge 3600 ]; then
+    n=$(($delta / 3600))
+    echo -n "${n}h"
+    delta=$(($delta - ($n * 3600)))
+  fi
+  if [ "$delta" -ge 60 ]; then
+    n=$(($delta / 60))
+    echo -n "${n}m"
+    delta=$(($delta - ($n * 60)))
+  fi
+  echo
+}
+
+function _display_gui_status() {
+  sed -e 's/^/0\t/' \
+    | tr "\t" "\n" \
+    | zenity \
+      --list --checklist \
+      --text='' \
+      --column=Delete --column=Id --column=At --column=Left --column=Message \
+      --width=500 \
+      2>/dev/null \
+    | _delete_jobs
+}
+
+function _delete_jobs() {
+  local deleted=
+  while read jobid; do
+    atrm "$jobid"
+    deleted=1
+  done < <(tr '|' "\n")
+  if [ -n "$deleted" ]; then
+    show_status
+  fi
+}
+
+function _update_state() {
+  _lock_state_file -x
+  local new_state_file
+  new_state_file=$(mktemp --tmpdir rem.state.XXX)
+  join -t $'\t' -j1 <(sort "$REM_STATE_FILE") <(atq | cut -f1 | sort) \
+    | sort -k2,3 >"$new_state_file"
+  mv "$new_state_file" "$REM_STATE_FILE"
+  cat "$REM_STATE_FILE"
+  _unlock_state_file
+}
+
+function add_reminder_m() {
+  local m="${1%m}"; shift
+  local datetime
+  datetime=$(date -d "now + ${m} minute" "$AT_DATE_FORMAT")
+  _add_reminder_datetime "$datetime" "$@"
+}
+
+function add_reminder_h() {
+  local h="${1%h}"; shift
+  local datetime
+  datetime=$(date -d "now + ${h} hour" "$AT_DATE_FORMAT")
+  _add_reminder_datetime "$datetime" "$@"
+}
+
+function add_reminder_hm() {
+  [[ "$1" =~ ([0-9]+)h([0-9]+)m ]]; shift
+  local h="${BASH_REMATCH[1]}"
+  local m="${BASH_REMATCH[2]}"
+  local datetime
+  datetime=$(date -d "now + ${h} hour + ${m} minute" "$AT_DATE_FORMAT")
+  _add_reminder_datetime "$datetime" "$@"
+}
+
+function add_reminder_time() {
+  local t="$1"; shift
+  local datetime=$(date -d "$t" "$AT_DATE_FORMAT")
+  _add_reminder_datetime "$datetime" "$@"
+}
+
+function _add_reminder_datetime() {
+  local datetime="$1"; shift
+  local msg="$*"
+  local sort_date
+  if [ -n "$msg" ]; then
+    msg=$(printf "%q" "$msg")
+  else
+    msg="$REM_DEFAULT_MSG"
+  fi
+  sort_date=$(date -d "$datetime" "+%Y-%m-%d %H:%M")
+  cmd="DISPLAY=${DISPLAY} ${REM} pop ${msg}"
+  # Example `at` output (goes to standard error):
+  # warning: commands will be executed using /bin/sh
+  # job 8 at Tue Apr 20 17:20:00 2021
+  at -M "$datetime" <<<"$cmd" 2>&1 | while read line; do
+    if [[ "$line" =~ ^job\ ([0-9]+) ]]; then
+      local job="${BASH_REMATCH[1]}"
+      _lock_state_file -x
+      echo -e "${job}\t${sort_date}\t${msg}" >>"$REM_STATE_FILE"
+      _unlock_state_file
+    fi
+  done
+  show_status
+}
+
+function pop_reminder() {
+  local msg="$*"
+  local time
+  if [ -z "$msg" ]; then
+    msg="$REM_DEFAULT_MSG"
+  fi
+  time=$(date "+%H:%M")
+  notify-send -u normal "$msg" "$time"
+}
+
+function delete_reminder() {
+  local jobid="${1:-}"
+  if [[ "$jobid" =~ [1-9][0-9]* ]]; then
+    atrm "$jobid"
+  fi
+  show_status
+}
+
+function _lock_state_file() {
+  exec 4<>"$REM_STATE_FILE"
+  flock "$@" 4
+}
+
+function _unlock_state_file() {
+  exec 4>&-
+}
+
+main "$@"
