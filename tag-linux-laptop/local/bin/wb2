@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 
-device_id=$(bluetoothctl devices | awk '/WONDERBOOM 2/ {print $2}')
+function main() {
+  if [ "$1" = "off" ]; then
+    bluetoothctl disconnect $(get_device_id)
+  else
+    rfkill unblock bluetooth
+    bluetoothctl connect $(get_device_id)
+  fi
+}
 
-if [ "$1" = "off" ]; then
-  bluetoothctl disconnect "$device_id"
-else
-  bluetoothctl connect "$device_id"
-fi
+function get_device_id() {
+  bluetoothctl devices | awk '/WONDERBOOM 2/ {print $2}'
+}
+
+main "$@"
