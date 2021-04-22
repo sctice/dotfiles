@@ -19,4 +19,7 @@ alias cdd='cd ~/Desktop'
 alias cdb='cd ~/Dropbox/Shawn/Sync/Brain'
 alias cdk='cd ~/Dropbox/Shawn/Sync/Keep'
 
+export DENO_INSTALL="/home/stice/.deno"
+export PATH="$DENO_INSTALL/bin:$PATH"
+
 # vim: sw=2 ts=2 sts=2 ft=bash
