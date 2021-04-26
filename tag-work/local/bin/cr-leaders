@@ -2,6 +2,7 @@
 <?php
 declare(strict_types = 1);
 
+chdir("{$_ENV['HOME']}/Code");
 require 'Exec/essentials.php';
 require 'Libs/ExecLib.php';
 
