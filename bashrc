@@ -66,7 +66,7 @@ export PS2="$MY_PS2"
 export EDITOR=$(which vim)
 
 # Don't add duplicates or any line that begins with whitespace to history.
-export HISTCONTROL="ignoredups:ignorespace"
+export HISTCONTROL="ignoredups:ignorespace:erasedups"
 
 # Make less process control characters, quit if the input is less than a screen
 # full, not clear the screen initially, and always wrap long lines.
@@ -77,6 +77,9 @@ export LESS='-R -F -X -+S'
 # repos and falls back to using find, passing the results in either case
 # through `squelch`.
 export FZF_DEFAULT_COMMAND=flist-git
+if hash fzf 2>/dev/null; then
+  . $HOME/.local/etc/fzf.sh
+fi
 
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
 
