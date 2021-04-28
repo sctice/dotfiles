@@ -99,13 +99,6 @@ fi
 
 alias ll='ls -l'
 
-# When inside a tmux session, SSH needs to explicitly override the TERM
-# environment variable from screen-256color to something that remote servers
-# will expect.
-if [ -n "$TMUX" ]; then
-  alias ssh='TERM=xterm-256color ssh'
-fi
-
 # Allow local bashrcs to override settings from above. Note the process
 # substitution to avoid a pipeline, which would cause the loop body to happen
 # in a subshell, where it wouldn't affect *this* shell.
