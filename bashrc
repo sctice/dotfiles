@@ -106,11 +106,4 @@ while read local_bashrc; do
   source "$local_bashrc"
 done < <(find ~/.local/etc/ -name 'bashrc.*')
 
-# A shortcut to interactively select a tmux session using fuzzy find and attach
-# to the session.
-function ta() {
-  local session=$(tmux ls | fzf | cut -d: -f1)
-  [ -n "$session" ] && tmux attach-session -t "$session"
-}
-
 # vim: sw=2 ts=2 sts=2 ft=sh
