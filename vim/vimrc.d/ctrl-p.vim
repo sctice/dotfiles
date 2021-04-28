@@ -38,7 +38,3 @@ noremap <Leader>b :CtrlPBuffer<CR>
 " buffer name so that we can fuzzy match by path.
 let g:ctrlp_bufname_mod = ':~:.'
 let g:ctrlp_bufpath_mod = ''
-
-" Set up fasd support for switching directories quickly.
-let g:ctrlp_extensions = ['Z']
-noremap <Leader>d :CtrlPZ<CR>

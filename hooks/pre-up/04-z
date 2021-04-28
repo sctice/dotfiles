@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+# Exit immediately on error
+set -euo pipefail
+
+home_local="${HOME}/.local"
+z_home="${home_local}/lib/z"
+repo=https://github.com/rupa/z.git
+
+main() {
+  echo -n "Checking for z... "
+
+  if [ -d "$z_home" ]; then
+    echo "Present"
+    update_z
+  else
+    echo "Missing"
+    install_z
+  fi
+}
+
+install_z() {
+  echo "Installing z..."
+  git clone --depth 1 "$repo" "$z_home"
+  do_install
+  echo "Installed z"
+}
+
+do_install() {
+  local man_dir="${home_local}/share/man/man1"
+  ( cd "$z_home" \
+    && mkdir -p "$man_dir" \
+    && cp z.1 "$man_dir/"
+  )
+}
+
+update_z() {
+  (
+    echo -n "Checking for more recent z... "
+    cd "$z_home"
+    git fetch
+    if [ -z "$(git log --oneline origin/master...)" ]; then
+      echo "At latest"
+      return
+    fi
+    echo "Update available"
+    echo "Updating z..."
+    git merge --ff origin/master
+    do_install
+    echo "Updated z"
+  )
+}
+
+main

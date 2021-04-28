@@ -12,7 +12,6 @@ Plugin 'gmarik/vundle'
 
 " Generic plugins useful in a variety of situations.
 
-Plugin 'amiorin/ctrlp-z'
 Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jpalardy/vim-slime'
 Plugin 't9md/vim-choosewin'

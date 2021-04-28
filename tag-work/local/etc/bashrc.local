@@ -1,8 +1,3 @@
-# In /etc/commonrc (sourced below), we define a global sd() function to change
-# to the current directory but under a different user, and that conflicts with
-# the alias set up by fasd.
-unalias sd
-
 # Source system definitions. These aren't sourced automatically by bash,
 # whether the session is interactive or not.
 if [ -f /etc/bashrc ]; then
