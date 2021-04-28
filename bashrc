@@ -84,14 +84,16 @@ fi
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
 
 # Set up fasd
-export _FASD_BACKENDS="native recent current viminfo"
-export _FASD_DATA="$HOME/.local/var/fasd-data"
-fasd_cache="$HOME/.local/var/fasd-init-bash"
-if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
-  fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install >| "$fasd_cache"
+if [[ $- == *i* ]] && hash fasd 2>/dev/null; then
+  export _FASD_BACKENDS="native recent current viminfo"
+  export _FASD_DATA="$HOME/.local/var/fasd-data"
+  fasd_cache="$HOME/.local/var/fasd-init-bash"
+  if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+    fasd --init posix-alias bash-hook bash-ccomp bash-ccomp-install >| "$fasd_cache"
+  fi
+  source "$fasd_cache"
+  unset fasd_cache
 fi
-source "$fasd_cache"
-unset fasd_cache
 
 # Aliases
 
