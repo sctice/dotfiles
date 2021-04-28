@@ -37,10 +37,8 @@ export PYTHONPATH="${HOME}/.python"
 # Append each new command to the history file and, on each new prompt, flush
 # history to file and reload from the file.
 shopt -s histappend
-PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
 
 # Aliases
-
 
 # Human sizes, coloring, display directories first
 alias ls='ls -h --color=auto --group-directories-first'
