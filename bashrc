@@ -73,18 +73,13 @@ export HISTCONTROL="ignoredups:ignorespace:erasedups"
 export PAGER='less'
 export LESS='-R -F -X -+S'
 
-# To find files for FZF, use our custom script that uses git ls-files in git
-# repos and falls back to using find, passing the results in either case
-# through `squelch`.
-if [[ $- == *i* ]] && hash fzf 2>/dev/null; then
-  export FZF_DEFAULT_COMMAND=flist-git
-  . $HOME/.local/etc/fzf.sh
-fi
-
-export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
+# Set up fzf.
+source $HOME/.local/etc/fzf.sh
 
 # Set up z and zz.
 source $HOME/.local/etc/z.sh
+
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
 
 # Aliases
 
