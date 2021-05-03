@@ -3,7 +3,7 @@
 notes_dir="${1:-~/Dropbox/Shawn/Sync/Brain}"
 note=${2:-todo.md}
 
-function main() {
+main() {
   local winid=
   winid=$(find_window)
   if [ -n "$winid" ]; then
@@ -13,19 +13,18 @@ function main() {
   fi
 }
 
-function find_window() {
+find_window() {
   wmctrl -l | grep "$notes_dir" | awk '{print $1}'
 }
 
-function activate_window() {
+activate_window() {
   local winid="$1"
-  echo "$winid"
   wmctrl -ia "$winid"
 }
 
-function launch_editor() {
+launch_editor() {
   local notes_dir_expanded="${notes_dir//\~/$HOME}"
-  gvim -c "cd $notes_dir_expanded" -f "${notes_dir_expanded}/${note}"
+  exec gvim -c "cd $notes_dir_expanded" -f "${notes_dir_expanded}/${note}"
 }
 
 main "$@"
