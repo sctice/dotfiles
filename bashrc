@@ -32,16 +32,9 @@ expand_prompt() {
   read -r -d '' script <<-'EOF'
 	{
 	  s/<WIN>/\\[\\e]1;\\u@\\h\\a\\e]2;\\a\\]/g
-	  s/<BLA>/\\[\\033[30m\\]/g
-	  s/<RED>/\\[\\033[31m\\]/g
-	  s/<GRE>/\\[\\033[32m\\]/g
-	  s/<YEL>/\\[\\033[33m\\]/g
-	  s/<BLU>/\\[\\033[34m\\]/g
-	  s/<MAG>/\\[\\033[35m\\]/g
-	  s/<CYA>/\\[\\033[36m\\]/g
-	  s/<GRY>/\\[\\033[37m\\]/g
-	  s/<WHI>/\\[\\033[97m\\]/g
 	  s/<NUL>/\\[\\033[0m\\]/g
+	  s/<FG>/\\[\\033[m\\]/g
+	  s/<\([^>]*\)>/\\[\\033[\1\\]/g
 	}
 	EOF
 
@@ -57,9 +50,9 @@ export PATH="${HOME}/.local/bin:${PATH}"
 # titles with each new prompt. We do this because systems often do this
 # differently, and we'd like the same style across terminal tabs when some are
 # local and others are connected to a remote host.
-export MY_PS1=$(expand_prompt '<WIN><CYA>\A <MAG>\u<GRY>@<MAG>\h <BLU>\W <RED>[\j] <GRY>❯<NUL> ')
+export MY_PS1=$(expand_prompt '<WIN><32m>\A <33m>\u<35m>@<33m>\h <34m>\W <1;31m>[\j] <FG>❯<NUL> ')
 export PS1="$MY_PS1"
-export MY_PS2=$(expand_prompt '<GRY>...❯<NUL> ')
+export MY_PS2=$(expand_prompt '<33m>...<FG>❯<NUL> ')
 export PS2="$MY_PS2"
 
 # Explicitly set the editor so git (and others) will use our own vim.
