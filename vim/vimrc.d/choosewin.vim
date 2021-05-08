@@ -3,4 +3,4 @@
 nmap - <Plug>(choosewin)
 
 " Enables a tmux-like overlay.
-let g:choosewin_overlay_enable = 1
+let g:choosewin_overlay_enable = 0
