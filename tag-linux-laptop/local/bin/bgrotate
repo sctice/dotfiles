@@ -1,36 +1,64 @@
 #!/usr/bin/env bash
 
+# The function to call in order to choose a directory of background images and
+# a specific image within that directory.
 BG_SCHEME=lowave
+
+# The proportion of most-recently-selected images among which to swap mtimes, a
+# float between 0 and 1. With PROPORTION_TO_SWAP=0.334 and a directory of 100
+# images, on each rotation we will swap the mtime of the selected image with
+# that of one of the 33 most recently selected images. Since the next image is
+# always that with the oldest mtime, if mtimes are all distinct then this means
+# that each rotation should result in picking an image that hasn't been
+# selected in at least the last 67 rotations while also virtually guaranteeing
+# some shuffling of the relative order over cycles through all images.
+PROPORTION_TO_SWAP=0.334
 
 LOFI_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Lofi"
 VAPORWAVE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Vaporwave"
 NATURE_BASE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Nature"
 
-function main() {
-  if [[ "$1" = "-l" ]]; then
-    list_backgrounds
-    return
-  fi
+main() {
+  case "$1" in
+    c|cur|curr|current) get_current_background ;;
+    l|ls|list) list_backgrounds ;;
+    ""|r|rot|rotate) rotate_background ;;
+    *) echo "Unrecognized command"; exit 1 ;;
+  esac
+}
 
+list_backgrounds() {
+  current=$(get_current_background)
+  current_dir=$(dirname "$current")
+  ls -ltr --time-style="+%Y-%m-%d %H:%M" "$current_dir" \
+    | tail -n +2 \
+    | sed -E -e "s#(\S+)\$#${current_dir}/\1#" |
+    while read -a cols; do
+      bg="${cols[-1]}"
+      if [ "$bg" = "$current" ]; then
+        echo -n "* "
+      else
+        echo -n "  "
+      fi
+      echo "${cols[@]:5}"
+    done
+}
+
+get_current_background() {
+  gsettings get org.gnome.desktop.background picture-uri \
+    | sed -e "s/^'//" -e "s/'$//"
+}
+
+rotate_background() {
   target_bg_uri=$(select_${BG_SCHEME}_background)
-  actual_bg_uri=$(gsettings get org.gnome.desktop.background picture-uri)
+  actual_bg_uri=$(get_current_background)
   if [[ "$target_bg_uri" != "$actual_bg_uri" ]]; then
     gsettings set org.gnome.desktop.background picture-uri "$target_bg_uri"
+    update_mtime "$target_bg_uri"
   fi
 }
 
-function list_backgrounds() {
-  today=$(select_${BG_SCHEME}_background)
-  for bg in $(select_${BG_SCHEME}_background all); do
-    if [ "$bg" = "$today" ]; then
-      echo "* $bg"
-    else
-      echo "  $bg"
-    fi
-  done
-}
-
-function select_lowave_background() {
+select_lowave_background() {
   now=$(date "+%H")
   if [[ "$now" < "17" ]]; then
     bg_dir="$LOFI_DIR"
@@ -38,16 +66,18 @@ function select_lowave_background() {
     bg_dir="$VAPORWAVE_DIR"
   fi
   start_date=$(date "+%Y-01-01")
-  select_background "$bg_dir" "$start_date" "$1"
+  select_background "$bg_dir"
 }
 
-function select_nature_background() {
+select_nature_background() {
+  # We don't use start_date anymore, but it was a little tricky to figure out,
+  # and there's little harm in keeping it around.
   IFS=$'\t' read bg_subdir start_date < <(select_season)
   bg_dir="$NATURE_BASE_DIR/$bg_subdir"
-  select_background "$bg_dir" "$start_date" "$1"
+  select_background "$bg_dir"
 }
 
-function select_season() {
+select_season() {
   today=$(date "+%m%d")
   if   [[ "$today" < "0320" || "$today" > "1220" ]]; then
     year=
@@ -66,54 +96,49 @@ function select_season() {
   fi
 }
 
-function select_background() {
+select_background() {
   bg_dir="$1"
-  start_date="$2"
-  all="$3"
-  backgrounds=$(shuffle_backgrounds "$bg_dir" "$start_date")
-  if [ "$all" = "all" ]; then
-    echo "$backgrounds"
-    return
+  oldest_background=$(ls -tr "$bg_dir" | head -n 1)
+  if [ -z "$oldest_background" ]; then
+    echo "No backgrounds found"
+    exit 1
   fi
-  num_backgrounds=$(wc -l <<<"$backgrounds")
-  elapsed_days=$(days_since "$start_date")
-  offset=$(($elapsed_days % "$num_backgrounds" + 1))
-  sed -ne "${offset}p" <<<"$backgrounds"
+  echo "${bg_dir}/${oldest_background}"
 }
 
-function shuffle_backgrounds() {
-  local bg_dir="$1"
-  local start_date="$2"
-  list_backgrounds_with_random_index "$bg_dir" "$start_date" \
-    | sort -n | awk -F "\t" '{print $2}'
+update_mtime() {
+  bg_uri="$1"
+  bg_dir=$(dirname "$bg_uri")
+  # 1. Update the current BG's mtime to the present.
+  touch "$bg_uri"
+  # 2. Swap its mtime with the mtime of a random BG from among a list of
+  # candidates.
+  n=$(get_num_swap_candidates "$bg_dir")
+  if [[ "$n" > 0 ]]; then
+    swap_target=$(ls -t "$bg_dir" | tail -n +2 | head -n "$n" | select_random)
+    swap_modification_times "$bg_uri" "${bg_dir}/${swap_target}"
+  fi
 }
 
-function list_backgrounds_with_random_index() {
-  local bg_dir="$1"
-  local start_date="$2"
-  RANDOM=$(date --date "$start_date" +"%Y%m%d")
-  while read bg_filename; do
-    RANDOM=$(generate_seed "$start_date-$bg_filename")
-    printf "%d\t%s\n" $RANDOM $bg_dir/$bg_filename
-  done < <(ls "$bg_dir")
+get_num_swap_candidates() {
+  bg_dir="$1"
+  n=$(ls "$bg_dir" | wc -l)
+  echo - | awk \
+    --assign n=$n \
+    --assign proportion_to_swap=$PROPORTION_TO_SWAP \
+    '{print int((n-1)*proportion_to_swap)}'
 }
 
-function generate_seed() {
-  local hashed_value=$(md5sum <<<"$1" | awk '{print $1}')
-  echo $((16#$hashed_value % 32768))
+select_random() {
+  sort -R | head -n1
 }
 
-function days_since() {
-  date_format="+%Y-%m-%d"
-  end_date=$(date "$date_format")
-  start_date=$(date --date "$1" "$date_format")
-  day_diff "$end_date" "$start_date"
-}
-
-function day_diff() {
-  end_ts=$(date -d "$1 UTC" +%s)
-  start_ts=$(date -d "$2 UTC" +%s)
-  echo $(( ($end_ts - $start_ts) / 86400 ))
+swap_modification_times() {
+  file_a="$1"
+  file_b="$2"
+  a_mtime=$(stat -c "%y" "$file_a")
+  touch -r "$file_b" "$file_a"
+  touch --date="$a_mtime" "$file_b"
 }
 
 main "$@"
