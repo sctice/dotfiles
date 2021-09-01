@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  local gpg_program
+  gpg_program=$(get_gpg_program)
+
+  git_config commit.gpgsign true
+  git_config gpg.program ${gpg_program}
+
+  setup_ifixit
+}
+
+setup_ifixit() {
+  git_config user.signingkey B826B669D5DD4213
+}
+
+get_gpg_program() {
+  if hash gpg 2>/dev/null; then
+    which gpg
+  else
+    die "Couldn't find gpg executable. Aborting."
+  fi
+}
+
+git_config() {
+  git config --local "$@"
+}
+
+die() {
+  echo $1 1>&2
+  exit 1
+}
+
+main "$@"

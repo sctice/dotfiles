@@ -36,6 +36,9 @@ export EDITOR=$(which vim)
 export PAGER='less'
 export LESS='-R -F -X -+S'
 
+# Tell GPG about our interactive TTY so that it can prompt us.
+export GPG_TTY=$(tty)
+
 source $HOME/.local/etc/fzf.sh
 source $HOME/.local/etc/z.sh
 
