@@ -5,6 +5,7 @@
 # - The shell launched by sshd for you when logging into a remote server
 # - The shell launched by Terminal.app for each tab
 # - The shell launched for tty{1,2,...} on Linux (NOT graphical terminals)
+# - NOT new tmux sessions
 #
 # The above means that this file will usually be run for new terminals and
 # connections but NOT on Linux, where it won't be run any time a new graphical
@@ -35,8 +36,8 @@ if [ uname != "Darwin" ]; then
 fi
 
 # Disable sending of START/STOP signals. This needs to be here, where we know
-# we have an interactive shell, since bash executes bashrc for children of
-# sshd and thus scp, which doesn't have a tty.
+# we have a login shell, since bash executes bashrc for children of sshd and
+# thus scp, which doesn't have a tty.
 stty -ixon
 
 # Allow local bash_profile to override settings from above.
