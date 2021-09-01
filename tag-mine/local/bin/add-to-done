@@ -1,26 +1,32 @@
 #!/usr/bin/env bash
 
-# E.g., '- [1!] Finish notes plugin' (note the single quotes)
+# E.g., '- Finish notes plugin' (note the single quotes) becomes
+# '- [05-25] Finish notes plugin'
 item="$1"
+today=$(date "+%m-%d")
+dated_item="- [$today] ${item#- }"
+
 # E.g., /absolute/path/to/done.md
 done_path="$2"
 
+# Next Sunday (or today, if today is Sunday) as YYYY-MM-DD.
 sunday=$(date -d "sunday" "+%Y-%m-%d")
 
 # Match a date heading for next Sunday (or today, if today is Sunday) at the
 # beginning of the file. If we find the heading, print the next (blank) line,
-# and then append $item; otherwise, insert the date heading, a blank line, and
-# $item, and branch to the end. Pass through all other file lines.
+# and then append $dated_item; otherwise, insert the date heading, a blank
+# line, and $dated_item, and branch to the end. Pass through all other file
+# lines.
 sed -i -e "
   1 {
     s/^## $sunday/&/
     tx
     i\\
-## $sunday\\n\\n$item\\n
+## $sunday\\n\\n$dated_item\\n
     b
     :x
     N
     a\\
-$item
+$dated_item
   }
 " "$done_path"
