@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Find candidates for the NYT spelling bee game. E.g.:
+#
+#    bee nboeiyg
+#
+# If you put the central letter first, then the first list of candidates
+# produced will include all of the known words that can be spelled with the
+# supplied letters. The last list will include pangram candidates.
+
+DICT=${DICT:-/usr/share/dict/words}
+CHARS="$1"
+
+candidates=$(mktemp bee.cand.XXXXXX)
+buf=$(mktemp bee.buf.XXXXXX)
+trap "rm -f $candidates $buf" EXIT
+
+grep -Ei "^[$CHARS]+$" $DICT >$candidates
+
+for (( i=0; i<${#CHARS}; i++ )); do
+  char=${CHARS:$i:1}
+  grep -i $char $candidates >$buf
+  mv $buf $candidates
+  echo "=== ${char}"
+  cat $candidates
+done
