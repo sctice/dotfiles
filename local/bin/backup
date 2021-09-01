@@ -112,7 +112,7 @@ function set_file_selection() {
 }
 
 function full_if_older_than() {
-  echo 3M
+  echo 6M
 }
 
 function num_full_backups() {
