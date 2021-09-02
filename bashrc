@@ -39,7 +39,7 @@ export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
 # in a subshell, where it wouldn't affect *this* shell.
 while read local_bashrc; do
   source "$local_bashrc"
-done < <(find ~/.local/etc/ -name 'bashrc.*')
+done < <(find ~/.local/etc/ -name 'bashrc.local.*')
 
 # Separate out configuration for interactive shells. It's not sufficient to put
 # interactive config in bash_profile because that's only executed for login
