@@ -12,10 +12,6 @@ main() {
   setup_ifixit
 }
 
-setup_ifixit() {
-  git_config user.signingkey B826B669D5DD4213
-}
-
 get_gpg_program() {
   if hash gpg 2>/dev/null; then
     which gpg
@@ -24,13 +20,18 @@ get_gpg_program() {
   fi
 }
 
+die() {
+  echo $1 1>&2
+  exit 1
+}
+
 git_config() {
   git config --local "$@"
 }
 
-die() {
-  echo $1 1>&2
-  exit 1
+setup_ifixit() {
+  git_config user.email shawn@ifixit.com
+  git_config user.signingkey B826B669D5DD4213
 }
 
 main "$@"

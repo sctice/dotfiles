@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  setup-signed-commits
+  change_origin 'ifixit.github.com'
+}
+
+change_origin() {
+  local new_domain="$1"
+  local curr_origin new_origin
+  curr_origin=$(git remote get-url origin)
+  if [[ "$curr_origin" =~ ^git@github\.com: ]]; then
+    new_origin=$(sed -E "s/^git@github.com/git@${new_domain}/" <<<"$curr_origin")
+    git remote set-url origin "$new_origin"
+    git remote set-url --push origin "$new_origin"
+  fi
+}
+
+main "$@"
