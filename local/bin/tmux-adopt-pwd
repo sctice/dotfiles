@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+tmux command-prompt -I $PWD -p "new session dir:" "attach -c %1"
