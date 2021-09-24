@@ -46,4 +46,4 @@ source $HOME/.local/etc/z.sh
 
 alias ll='ls -l'
 
-# vim: sw=2 ts=2 sts=2 ft=sh
+# vim: sw=2 ts=2 sts=2 ft=bash
