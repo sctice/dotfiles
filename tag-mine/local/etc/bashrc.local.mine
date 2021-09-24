@@ -15,6 +15,15 @@ else
   alias ls='ls -Gh'
 fi
 
+# If we have ncal, use that with `cal` compatibility to get today's date
+# highlighted. If we have either cal program, then default to -3 to get a
+# 3-month view.
+if hash ncal 2>/dev/null; then
+  alias cal='ncal -C3'
+elif hash cal 2>/dev/null; then
+  alias cal='cal -3'
+fi
+
 export DENO_INSTALL="/home/stice/.deno"
 export PATH="$DENO_INSTALL/bin:$PATH"
 
