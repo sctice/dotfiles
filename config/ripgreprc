@@ -1,3 +1,5 @@
 --smart-case
+--glob-case-insensitive
+--no-heading
 
 --type-add=phtml:*.{phtml}
