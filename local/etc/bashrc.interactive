@@ -42,6 +42,13 @@ export GPG_TTY=$(tty)
 source $HOME/.local/etc/fzf.sh
 source $HOME/.local/etc/z.sh
 
+# For some reason probably related to login versus non-login shells, tmux
+# doesn't get bash completion enabled by default.
+bash_completion=/etc/bash_completion
+if [ -r "$bash_completion" ]; then
+  . "$bash_completion"
+fi
+
 # Aliases
 
 alias ll='ls -l'
