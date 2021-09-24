@@ -15,10 +15,6 @@ else
   alias ls='ls -Gh'
 fi
 
-alias cdd='cd ~/Desktop'
-alias cdb='cd ~/Dropbox/Shawn/Sync/Brain'
-alias cdk='cd ~/Dropbox/Shawn/Sync/Keep'
-
 export DENO_INSTALL="/home/stice/.deno"
 export PATH="$DENO_INSTALL/bin:$PATH"
 
