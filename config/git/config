@@ -11,10 +11,12 @@
 	ds = !git --no-pager diff --stat
 	conflicts = diff --name-only --diff-filter=U
 	clean-merged = !git-clean-merged
+	diff-branch = !git diff $(git merge-base HEAD origin/master)..
 	staged = diff --cached --stat
 	log1 = log --date=iso --pretty='%C(auto)%h%Creset %ad %<(12,trunc)%aN %s'
 	logme = log --date=iso --author=Shawn --pretty='%C(auto)%h%Creset %<(18,trunc)%ai %s'
 	logmsg = log --format='format:%B' --reverse
+	log-branch = !git log --date=iso --pretty='%C(auto)%h%Creset %ad %<(12,trunc)%aN %s' $(git merge-base HEAD origin/master)..
 	changes = diff-index --name-only -r --diff-filter=ACMR HEAD
 	ignored = ls-files --exclude-standard --others --ignored
 	clean-npm = checkout -- '**/package-lock.json'
