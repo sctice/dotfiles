@@ -22,13 +22,10 @@ def usage(status)
   puts <<-EOT
 Usage:
   gg --raw GITGREP_OPT...
-  gg [GITGREP_OPT...] EXTENSIONS PATTERN [--] [PATH...]
+  gg [GITGREP_OPT...] PATTERN [--] [PATH...]
 
 Description:
-  Each GITGREP_OPT is passed through to git-grep unmodified. EXTENSIONS is a
-  comma-separated list of extensions files must match against before being
-  searched through (e.g. html,css or 'all' or 'any' to match any extension,
-  including no extension).
+  Each GITGREP_OPT is passed through to git-grep unmodified.
   EOT
   exit status
 end
@@ -66,30 +63,17 @@ def main
 
   our_args = argv.slice!(our_arg_start, argv.length) + our_explicit_args
 
-  # Everything between 'gg' and the extensions specifier (which is what's left
-  # after the above processing) is a git-grep option.
+  # Everything between 'gg' and the pattern (which is what's left after the
+  # above processing) is a git-grep option.
   gitgrep_args = argv
 
   if our_args.empty?
-    warn "No extensions specifier or pattern given"
-    usage 1
-  elsif our_args.length == 1
-    warn "No extensions specifier given (use 'all' to match all extensions)"
+    warn "No pattern"
     usage 1
   end
 
-  exts_str, pattern, *pathspecs = our_args
+  pattern, *pathspecs = our_args
   pathspecs << '.' if pathspecs.empty?
-
-  # If narrowing results by extension, expand each pathspec to match any of the
-  # specified extensions. E.g., with extension list "py,sh", the pathspec
-  # "tests/" becomes "tests/*.py", "tests/*.sh".
-  unless exts_str == 'any' or exts_str == 'all'
-    exts = exts_str.split(',')
-    pathspecs = pathspecs.flat_map do |path|
-      exts.map { |ext| "#{path.chomp('/')}/*.#{ext}" }
-    end
-  end
 
   # Pass any squelch definitions as extra pathspecs that exclude matching
   # paths.
