@@ -8,65 +8,45 @@
 # - 0 browser windows open => Launch browser window
 # - 1 browser window open => Switch to open browser window
 # - 2+ browser windows open
-#   - If invoked with "alt" => go to smallest browser window
-#   - Otherwise, go to the most recent window that isn't the smallest
-#     - If all windows are the same height, we still exclude whichever one
-#       sorts first from consideration
+#   - If invoked without "alt" => go to the first browser window ordered by
+  #   y-offset ascending
+#   - Otherwise => go to second browser window ordered by y-offset ascending
+#
+# Oddly, wmctrl started reporting incorrect heights (at least as of
+# 2022-01-06), so I switched from using window height to y-offset, which is
+# still relatively correct between browser windows.
 
 TARGET_CLASS=google-chrome.Google-chrome
 
-function main() {
-  windows=$(list_browser_windows_by_height_asc $TARGET_CLASS)
+main() {
+  windows=$(list_browser_windows_by_y_offset_asc $TARGET_CLASS)
   if [ -z "$windows" ]; then
     sensible-browser
     return
   fi
 
   num_windows=$(wc -l <<<"$windows")
-  if [[ "$num_windows" -eq 1 || "$1" = "alt" ]]; then
-    # The windows are ordered by height ascending, so if we've been asked to go
-    # to the "alternate" (smaller) window, that will be the first one.
+  if [[ "$1" != "alt" ]]; then
     winid=$(head -1 <<<"$windows")
   else
-    # Exclude the smallest window.
-    candidate_winids=$(tail -n +2 <<<"$windows")
-    winid=$(select_most_recent "$candidate_winids")
+    # The windows are ordered by y-offset ascending, so if we've been asked to
+    # go to the "alternate" (smaller, lower-down) window, that will be the
+    # second one.
+    winid=$(tail -n +2 <<<"$windows" | head -1)
   fi
 
   goto_window "$winid"
 }
 
-function list_browser_windows_by_height_asc() {
+list_browser_windows_by_y_offset_asc() {
   wm_class="$1"
   wmctrl -xGl \
-    | awk "/$wm_class/ {print \$6, \$1}" \
+    | awk "/$wm_class/ {print \$4, \$1}" \
     | sort -n \
     | awk '{print $2}'
 }
 
-function select_most_recent() {
-  candidate_winids="$1"
-  for recent_winid in $(list_windows_by_recency); do
-    for cand_winid in $candidate_winids; do
-      # xprop doesn't display leading zeros on hex window ids, but wmctrl does,
-      # so we convert both to decimal for comparison.
-      if [ "$((recent_winid))" = "$((cand_winid))" ]; then
-        echo "$cand_winid"
-        return
-      fi
-    done
-  done
-}
-
-function list_windows_by_recency() {
-  xprop -root \
-    | grep '^_NET_CLIENT_LIST_STACKING' \
-    | grep -o '0x.*' \
-    | tr -s ', ' "\n" \
-    | tac
-}
-
-function goto_window() {
+goto_window() {
   wmctrl -ia "$1"
 }
 
