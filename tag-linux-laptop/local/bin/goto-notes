@@ -25,7 +25,7 @@ activate_window() {
 launch_editor() {
   local notes_dir_expanded="${notes_dir//\~/$HOME}"
   cd "$notes_dir_expanded"
-  exec gvim "${note}"
+  exec gvim -f "${note}"
 }
 
 main "$@"
