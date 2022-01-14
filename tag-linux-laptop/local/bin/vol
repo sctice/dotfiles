@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+
+# Volume percentage to use for command "low"
+low_default=33
+
+# Use pacmd and pactl to both set and show volume of the active sink. Displays
+# the volume using gdbus to generate an org.gnome.Shell.ShowOSD command.
+main() {
+  case "${1:-show}" in
+    s|show) show_volume ;;
+    st|status) show_status ;;
+    [0-9]|[1-9][0-9]|100) set_volume "$1" ;;
+    m|mute) set_volume 0 ;;
+    l|low) set_volume "$low_default" ;;
+    h|half) set_volume 50 ;;
+    f|full) set_volume 100 ;;
+    -h|--help|*) show_help ;;
+  esac
+}
+
+# Get the current volume and active port from `pacmd`, then generate an
+# org.gnome.Shell.ShowOSD command equivalent to what the volume down/up media
+# keys generate (captured with dbus-monitor "interface='org.gnome.Shell'").
+show_volume() {
+  local active_sink volume icon volume_level active_port label
+
+  active_sink=$(_get_active_sink)
+
+  volume=$(_get_volume_percent <<<"$active_sink")
+  icon=$(_get_volume_icon "$volume")
+  volume_level=$(_get_volume_level "$volume")
+
+  active_port=$(_get_active_port <<<"$active_sink")
+  label=$(_get_port_label "$active_port" <<<"$active_sink")
+
+  gdbus call --session \
+    --dest org.gnome.Shell \
+    --object-path /org/gnome/Shell \
+    --method org.gnome.Shell.ShowOSD \
+    "{'icon': <'${icon}'>, 'label': <'${label}'>, 'level': <${volume_level}>}" \
+    >/dev/null
+}
+
+# List all sinks, but filter out all but the lines of the active one, which is
+# identified by an asterisk in front of its index.
+_get_active_sink() {
+  pacmd list-sinks | sed -En '/^[[:space:]]*\*/,/^[[:space:]]*index [0-9]/p'
+}
+
+# Report the maximum volume percentage among all channels.
+_get_volume_percent() {
+  perl -nle 'if (/^\s*volume:/) { @p = $_ =~ /\d+(?=%)/g; print join("\n", @p) }' \
+    | sort -n \
+    | tail -1
+}
+
+# Convert a percentage like 33 to a float like 0.330.
+_get_volume_level() {
+  local volume_pct="$1"
+  printf "3k %d 100 / p" "$volume_pct" | dc
+}
+
+# Convert a volume percentage like 33 to the corresponding icon that ShowOSD
+# understands.
+_get_volume_icon() {
+  local volume_pct="$1"
+  if [ "$volume_pct" -lt 34 ]; then
+    echo audio-volume-low-symbolic
+  elif [ "$volume_pct" -lt 67 ]; then
+    echo audio-volume-medium-symbolic
+  else
+    echo audio-volume-high-symbolic
+  fi
+}
+
+# Select just the name of the active port from the standard input. We use this
+# to find the corresponding label (unfortunately, the active port is identified
+# on a line following the port listing).
+_get_active_port() {
+  perl -nle '/^\s*active port: <([^>]+)>/ && print $1'
+}
+
+# Use the active port to extract the port label, which we interpret as
+# everything after the port identifier and before the port metadata provided in
+# parentheses.
+_get_port_label() {
+  local active_port="$1"
+  perl -nle '/^\s*'"$active_port"': (.*) \(priority/ && print $1'
+}
+
+show_status() {
+  local active_sink volume active_port label
+
+  active_sink=$(_get_active_sink)
+  volume=$(_get_volume_percent <<<"$active_sink")
+  active_port=$(_get_active_port <<<"$active_sink")
+  label=$(_get_port_label "$active_port" <<<"$active_sink")
+
+  echo "${label}: ${volume}%"
+}
+
+# Set the default sink to the requested volume (a percentage, 0-100) and then
+# show the current volume.
+set_volume() {
+  pactl set-sink-volume @DEFAULT_SINK@ "${1}%"
+  show_volume
+}
+
+show_help() {
+  echo "vol [s[how]]"
+  echo "    st[atus]"
+  echo "    PERCENT"
+  echo "    m[ute]"
+  echo "    l[ow]"
+  echo "    h[alf]"
+  echo "    f[ull]"
+}
+
+main "$@"
