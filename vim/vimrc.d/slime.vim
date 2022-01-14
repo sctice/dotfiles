@@ -10,6 +10,6 @@ let g:slime_python_ipython = 1
 " Discard all of Slime's default mappings.
 let g:slime_no_mappings = 1
 
-xmap <leader>s <Plug>SlimeRegionSend
-nmap <leader>s <Plug>SlimeParagraphSend
-nmap <leader>S <Plug>SlimeMotionSend
+xmap <leader>> <Plug>SlimeRegionSend
+nmap <leader>> <Plug>SlimeParagraphSend
+nmap <leader>{ <Plug>SlimeMotionSend

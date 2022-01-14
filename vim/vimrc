@@ -27,6 +27,7 @@ call s:loadrc("colors")       " Color scheme, highlighting
 " Extras: targeted to specific activities.
 
 call s:loadrc("matchit")      " Make % bounce between more things
+call s:loadrc("sort")         " Sort lines quickly
 call s:loadrc("slime")        " Interact with REPLs
 call s:loadrc("custom-grep")  " Grep with temp grepprg replacement
 call s:loadrc("rcedit")       " Edit vimrc
