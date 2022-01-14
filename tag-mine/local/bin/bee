@@ -9,18 +9,36 @@
 # supplied letters. The last list will include pangram candidates.
 
 DICT=${DICT:-/usr/share/dict/words}
-CHARS="$1"
 
-candidates=$(mktemp bee.cand.XXXXXX)
-buf=$(mktemp bee.buf.XXXXXX)
-trap "rm -f $candidates $buf" EXIT
+main() {
+  partial=
+  while getopts "p" o; do
+    case "$o" in
+      p) partial=1 ;;
+    esac
+  done
+  shift $((OPTIND-1))
 
-grep -Ei "^[$CHARS]+$" $DICT >$candidates
+  chars="$1"
 
-for (( i=0; i<${#CHARS}; i++ )); do
-  char=${CHARS:$i:1}
-  grep -i $char $candidates >$buf
-  mv $buf $candidates
-  echo "=== ${char}"
-  cat $candidates
-done
+  candidates=$(mktemp bee.cand.XXXXXX)
+  buf=$(mktemp bee.buf.XXXXXX)
+  trap "rm -f $candidates $buf" EXIT
+
+  if [ -z "$partial" ]; then
+    grep -Ei "^[$chars]+$" $DICT
+  else
+    grep -Ei "[$chars]" $DICT
+  fi >$candidates
+
+  for (( i=0; i<${#chars}; i++ )); do
+    char=${chars:$i:1}
+    grep -i $char $candidates >$buf
+    mv $buf $candidates
+    echo "=== ${char}"
+    esc=$(printf '\033')
+    sed -E -e "s,([$chars]),${esc}[0;32m\\1${esc}[0m,ig" $candidates
+  done
+}
+
+main "$@"
