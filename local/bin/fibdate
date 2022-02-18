@@ -3,50 +3,57 @@
 require 'date'
 require 'optparse'
 
-Options = Struct.new(:x, :n)
+Options = Struct.new(:x, :n, :d)
 
 
 def main
   opts = parse_args ARGV
   fibs_after(opts.x).take(opts.n).each do |x|
-    day = Date.today + x
+    day = opts.d + x
     datestamp = day.strftime("%Y-%m-%d")
     printf "%5d %s\n", x, datestamp
   end
 end
 
 def parse_args(args)
-  opts = Options.new(0, 3)
+  opts = Options.new(0, 3, Date.today)
   parser = OptionParser.new do |p|
-    p.banner = "
-Usage: fibdate [-n NUM] AFTER
+    p.banner = "\
+Usage: fibdate [-d FROM] [-n NUM] AFTER
 
-Print out NUM (default #{opts.n}) dates relative to today falling on a
-Fibonacci sequence starting with the first Fibonacci number greater than the
-provided argument, AFTER.
+Print out dates relative to FROM (default today) falling on days in a Fibonacci
+sequence starting with the first Fibonacci number greater than AFTER (default #{opts.x}).
 
 "
+    p.on("-dFROM", String, "Use FROM as start date") do |d|
+      begin
+        date = Date.strptime(d, "%Y-%m-%d")
+        opts.d = date
+      rescue Date::Error
+        $stderr << "Bad date: #{d}\n"
+        exit 1
+      end
+    end
+
     p.on("-nNUM", Integer, "Select NUM dates") do |n|
-      opts.n = n
+      opts.n = [1, n].max
     end
   end
+
   parser.parse!(args)
-  if args.length < 1
-    $stderr << parser.help
-    exit 1
-  end
-  opts.x = args[0].to_i
+
+  opts.x = args.fetch(0, "0").to_i
   opts
 end
 
 def fibs_after(x)
   Enumerator.new do |enum|
-    a, b = 1, 1
-    loop do                                         
-      a, b = b, a + b                               
-      enum.yield b if b > x                         
-    end                                             
-  end                                               
-end                                                 
-                                                    
+    a, b = 0, 1
+    loop do
+      a, b = b, a + b
+      enum.yield b if b > x
+    end
+  end
+end
+
 main if __FILE__ == $0
