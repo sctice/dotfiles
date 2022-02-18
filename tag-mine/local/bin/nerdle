@@ -1,0 +1,247 @@
+#!/usr/bin/env ruby
+
+require 'set'
+require 'optparse'
+
+# List all candidates not ruled out by an optionally-annotated guess and list the top 3 candidates
+# at the bottom, using a heuristic that ranks candidates by the number of other candidates they
+# have the potential to exclude.
+#
+# nerdle
+# nerdle -i 13 -e 9 '[^34][^1]+??=?2'
+# nerdle -e / '????????'
+# nerdle -z '????????'
+#
+# According to the heuristic, 100-97=3 is the best guess to start with. This is assuming that
+# solutions with 0 operators (e.g., 0*9912=0) are excluded).
+def main
+  args = ARGV.getopts("i:e:z")
+  if ARGV[0].nil?
+    puts "100-97=3"
+    return
+  end
+  guess = Guess.from_argv(ARGV[0], args['i'] || "", args['e'] || "")
+  stats = CandidateStats.new(guess)
+  candidates = []
+  guess.candidates(allow_zero_operands: args['z']).each do |cand|
+    puts cand.join
+    candidates << cand
+    stats.add(cand)
+  end
+  if candidates.length > 2
+    top_n = candidates.max_by(3) {|cand| stats.score(cand)}
+    puts
+    top_n.each_with_index do |cand, i|
+      puts "#{i+1}. #{cand.join}"
+    end
+  end
+end
+
+class Guess
+  @@digits = Set.new('0'..'9').freeze
+  @@operators = Set.new("+-*/=".chars).freeze
+  @@valid_chars = Set.new("0123456789+-*/=".chars).freeze
+
+  attr_reader :chars, :includes, :open
+
+  def initialize(chars, includes, excludes)
+    open = @@valid_chars.dup.subtract(excludes)
+    open.delete('=') if chars.any? {|c| c.value == '='}
+    @chars = chars.freeze
+    @includes = includes.freeze
+    @open = open.freeze
+  end
+
+  def self.from_argv(str, includes, excludes)
+    chars = str.scan(%r{(?<c>[-+*/=0-9])|(?:\[\^(?<m>[-+*/=0-9]+)\])|(?<u>\?)}).map do |m|
+      char, miss, unk = m
+      Char.new(char, miss, !unk.nil?)
+    end
+    Guess.new(chars, Counts.new(includes.chars), Set.new(excludes.chars))
+  end
+
+  def candidates(allow_zero_operands: false)
+    invalid_zero_ops = Set.new([['/', '0']])
+    if !allow_zero_operands
+      invalid_zero_ops.merge("-+*".chars.map{|c| [c, '0']})
+      # Also don't allow 0 as the first operand.
+      invalid_zero_ops.add(['0'])
+    end
+
+    Enumerator.new do |enum|
+      f = -> (pos, chars, includes, lhv, rhp) {
+        # Cut if 0 occurs at the start of a number with 2+ digits.
+        return if is_digit(chars[-1]) && chars[-2] == '0' && !is_digit(chars[-3])
+
+        # Cut on a 0 after invalid operators (always /, optionally the rest).
+        return if invalid_zero_ops.include?(chars.last(2))
+
+        # Cut if operator at start or immediately after another operator.
+        return if is_operator(chars[-1]) && (chars[-2].nil? || is_operator(chars[-2]))
+
+        # Cut if we're on the RHS of = and the previous char doesn't match the char at the same
+        # offset in the value of the LHS.
+        return if !lhv.nil? && chars.last != lhv[pos - rhp - 1]
+
+        # Cut if we have more includes left to assign then there are remaining characters.
+        return if includes.size > @chars.length - pos
+
+        if chars.last == "="
+          rhp = pos
+          begin
+            lhv = eval_expr(chars[..pos-2].join).to_s
+          rescue RemainderError
+            return
+          end
+          return if lhv.match(/[^[:digit:]]/)
+        end
+
+        # Cut if we're on the last char and we still haven't seen '='
+        return if lhv.nil? && @chars.length - pos == 1
+
+        if pos == @chars.length
+          enum.yield chars if valid_expr(chars)
+          return
+        end
+
+        char = @chars[pos]
+        if char.value
+          f.call(pos + 1, chars + [char.value], includes, lhv, rhp)
+        else
+          # If a guess has two 9s and the solution has just one, then one 9 will be a wrong-pos and
+          # the other will be a miss, so we need to add `includes` to the open set.
+          open = @open.union(includes.values).subtract(char.excludes)
+          open.each do |c|
+            f.call(pos + 1, chars + [c], includes.dup.dec(c), lhv, rhp)
+          end
+        end
+      }
+
+      f.call(0, [], @includes, nil, nil)
+    end
+  end
+
+  private
+
+  def eval_expr(chars)
+    expr = chars.gsub(/\d+/, '\\0.to_r')
+    n = eval(expr)
+    raise RemainderError.new if n.denominator != 1
+    n.numerator
+  end
+
+  def valid_expr(chars)
+    lhs, rhs = chars.join.split('=')
+    eval_expr(lhs) == eval_expr(rhs)
+  end
+
+  def is_digit(char)
+    @@digits.include?(char)
+  end
+
+  def is_operator(char)
+    @@operators.include?(char)
+  end
+end
+
+class Char
+  attr_reader :value, :excludes, :is_open
+
+  def initialize(char, miss, is_open)
+    @value = char
+    @excludes = Set.new(miss.nil? ? [] : miss.chars)
+    @is_open = char.nil?
+  end
+end
+
+class Counts
+  attr_reader :counts
+
+  def initialize(enum = [])
+    @counts = {}
+    @counts.default = 0
+    enum.each {|x| inc(x)}
+  end
+
+  def initialize_copy(orig)
+    super
+    @counts = orig.counts.dup
+  end
+
+  def values
+    @counts.keys
+  end
+
+  def inc(x)
+    @counts[x] += 1
+    self
+  end
+
+  def dec(x)
+    return self if !@counts.has_key?(x)
+    count = @counts[x] -= 1
+    @counts.delete(x) if count == 0
+    self
+  end
+
+  def size
+    @counts.values.sum
+  end
+end
+
+class RemainderError < RuntimeError
+end
+
+class CandidateStats
+  def initialize(guess)
+    @open_indices = guess.chars.map.with_index{|c, i| i if c.is_open}.compact
+    @rows = 0
+    @rows_with_c = Hash.new(0)
+    @rows_with_c_at_j = Hash.new {|h, k| h[k] = Hash.new(0)}
+    @rows_with_c_not_at_j = Hash.new {|h, k| h[k] = Hash.new(0)}
+  end
+
+  def add(cand)
+    open = open_chars(cand)
+    @rows += 1
+    open.each_with_index do |c, j|
+      @rows_with_c_at_j[c][j] += 1
+    end
+    open.uniq.each do |c|
+      @rows_with_c[c] += 1
+      open.each_with_index do |c_other, j_other|
+        @rows_with_c_not_at_j[c][j_other] += 1 if c_other != c
+      end
+    end
+  end
+
+  # This is inexact because we're potentially double-counting eliminations when characters at
+  # different positions are correlated (i.e., one can't be present without the other being
+  # present), but to be exact I think we'd have to consider all ways in which each candidate could
+  # be wrong (which is just the count of other candidates), and for each way I think we'd have to
+  # tally counts of candidates that would be eliminated by our guess. That seems too slow.
+  def score(cand)
+    s = 0
+    open = open_chars(cand)
+    open.each_with_index do |c, j|
+      # Right C and J, so eliminate rows that don't have C at J.
+      s += (@rows_with_c_at_j[c][j] / @rows) * (@rows - @rows_with_c_at_j[c][j])
+      # Right C but wrong J, so eliminate rows that don't contain C or that have C at J.
+      s += (@rows_with_c_not_at_j[c][j] / @rows) * ((@rows - @rows_with_c[c]) + @rows_with_c_at_j[c][j])
+      # C not at J, nor anyware else, so eliminate rows that contain C at J
+      s += ((@rows - @rows_with_c_at_j[c][j]) / @rows) * @rows_with_c_at_j[c][j]
+    end
+    s
+  end
+
+  def open_chars(cand)
+    cand.values_at(*@open_indices)
+  end
+end
+
+if __FILE__ == $0
+  begin
+    main
+  rescue Interrupt
+  end
+end
