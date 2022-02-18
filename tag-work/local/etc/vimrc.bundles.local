@@ -1,0 +1,3 @@
+" Language-specific plugins.
+
+Plugin 'phpactor/phpactor'
