@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  local hosts
+  for region in us-east-1 us-west-1; do
+    hosts=$(_fetch_host_keys $region)
+    _remove_old_hosts <<<"$hosts"
+    echo "$hosts" >>~/.ssh/known_hosts
+  done
+}
+
+_fetch_host_keys() {
+  local region="$1"
+  aws --region "$region" ec2 describe-instances | \
+    jq -r '
+      .Reservations[] | .Instances[] | select(.PublicDnsName != "") |
+        "\(.PublicIpAddress) \(.PublicDnsName),\(.PublicIpAddress)"
+    ' | \
+    ssh-keyscan -f - 2>/dev/null
+}
+
+_remove_old_hosts() {
+  awk -F, '{ print $1 }' | xargs -n1 ssh-keygen -R
+}
+
+main "$@"
