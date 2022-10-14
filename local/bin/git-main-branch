@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# There is no "main" branch with git, but I often use a main-branch/feature-branch approach, and I
+# have some aliases set up to conveniently show commits/diffs on a branch since it has diverged
+# from the main branch. But some repositories use "main" as the "main" branch name and others use
+# "master", which is git's default branch name, and those aliases need to know which branch on
+# which to look for a point of divergence. We don't expect to have *both* "main" and "master", so
+# we'll just use the first one that we see when listing all branches.
+
+git branch --list | grep -E '^\*? +(main|master)$' | head -n 1 | tr -d ' *'
