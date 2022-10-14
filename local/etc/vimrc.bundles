@@ -14,6 +14,7 @@ Plugin 'gmarik/vundle'
 
 Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jpalardy/vim-slime'
+Plugin 'jremmen/vim-ripgrep'
 Plugin 't9md/vim-choosewin'
 Plugin 'tpope/tpope-vim-abolish'
 Plugin 'tpope/vim-commentary'

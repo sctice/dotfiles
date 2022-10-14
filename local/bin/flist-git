@@ -2,7 +2,20 @@
 
 main() {
   local dir="${1:-.}"
-  find_files "$dir" | squelch
+  rg --files
+  if have_rg; then
+    local unrestricted=""
+    if [[ -n "${flist_git_noexclude:-}" ]]; then
+      unrestricted="-u"
+    fi
+    rg "$unrestricted" --files
+  else
+    find_files "$dir"
+  fi
+}
+
+have_rg() {
+  hash rg 2>/dev/null
 }
 
 find_files() {

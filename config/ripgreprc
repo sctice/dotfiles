@@ -3,3 +3,5 @@
 --no-heading
 
 --type-add=phtml:*.{phtml}
+--type-add=css:*.{less}
+--type-add=tjs:*.{js,jsx,ts,tsx}
