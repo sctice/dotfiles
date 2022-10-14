@@ -21,7 +21,7 @@ TARGET_CLASS=google-chrome.Google-chrome
 main() {
   windows=$(list_browser_windows_by_y_offset_asc $TARGET_CLASS)
   if [ -z "$windows" ]; then
-    sensible-browser
+    exec sensible-browser
     return
   fi
 
