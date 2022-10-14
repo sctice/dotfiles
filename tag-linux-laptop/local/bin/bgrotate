@@ -2,7 +2,7 @@
 
 # The function to call in order to choose a directory of background images and
 # a specific image within that directory.
-BG_SCHEME=lowave
+BG_SCHEME=daynight
 
 # The proportion of most-recently-selected images among which to swap mtimes, a
 # float between 0 and 1. With PROPORTION_TO_SWAP=0.334 and a directory of 100
@@ -12,10 +12,10 @@ BG_SCHEME=lowave
 # that each rotation should result in picking an image that hasn't been
 # selected in at least the last 67 rotations while also virtually guaranteeing
 # some shuffling of the relative order over cycles through all images.
-PROPORTION_TO_SWAP=0.334
+PROPORTION_TO_SWAP=0.4
 
-LOFI_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Lofi"
-VAPORWAVE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Vaporwave"
+DAYTIME_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Daytime"
+NIGHTTIME_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Nighttime"
 NATURE_BASE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Nature"
 
 main() {
@@ -61,16 +61,17 @@ rotate_background() {
   actual_bg_uri=$(get_current_background)
   if [[ "$target_bg_uri" != "$actual_bg_uri" ]]; then
     gsettings set org.gnome.desktop.background picture-uri "$target_bg_uri"
+    gsettings set org.gnome.desktop.background picture-uri-dark "$target_bg_uri"
     update_mtime "$target_bg_uri"
   fi
 }
 
-select_lowave_background() {
+select_daynight_background() {
   now=$(date "+%H")
   if [[ "$now" < "17" ]]; then
-    bg_dir="$LOFI_DIR"
+    bg_dir="$DAYTIME_DIR"
   else
-    bg_dir="$VAPORWAVE_DIR"
+    bg_dir="$NIGHTTIME_DIR"
   fi
   start_date=$(date "+%Y-01-01")
   select_background "$bg_dir"
