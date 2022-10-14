@@ -1,6 +1,6 @@
 " Disable the menu bar.
 set guioptions-=m
 
-set guifont=Iosevka\ Regular\ 12
+set guifont=Iosevka\ Regular\ 11
 
 set lines=51 columns=119

@@ -3,6 +3,8 @@
 set guioptions=Mm         " No toolbar in the GUI; must be first in .vimrc
 set nocompatible          " No compatibility with vi
 
+let &t_ut=''              " Fix vim background redraw in kitty terminal
+
 filetype on               " Recognize syntax by file extension
 filetype indent on        " Check for indent file
 filetype plugin on        " Allow plugins to be loaded by file type
