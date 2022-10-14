@@ -10,10 +10,15 @@
 
 DICT=${DICT:-/usr/share/dict/words}
 
+help() {
+  echo "bee [-p] LETTERS"
+}
+
 main() {
   partial=
-  while getopts "p" o; do
+  while getopts "hp" o; do
     case "$o" in
+      h) help; exit ;;
       p) partial=1 ;;
     esac
   done
