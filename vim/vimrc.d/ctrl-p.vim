@@ -23,8 +23,7 @@ if has("unix")
   \     1: [
   \       '.git',
   \       'git ls-files -co
-  \         --exclude-standard %s
-  \         | squelch'
+  \         --exclude-standard %s'
   \     ]
   \   },
   \   'fallback': 'find %s -type f'

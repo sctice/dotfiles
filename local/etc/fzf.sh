@@ -3,9 +3,8 @@ if [[ $- != *i* ]] || ! hash fzf 2>/dev/null; then
   return
 fi
 
-# To find files for FZF, use our custom script that uses git ls-files in git
-# repos and falls back to using find, passing the results in either case
-# through `squelch`.
+# To find files for FZF, use our custom script that allows easily toggling ignores and uses ripgrep
+# if it's available.
 export FZF_DEFAULT_COMMAND=flist-git
 
 bind '"\C-r": "\C-x1\e^\er"'
