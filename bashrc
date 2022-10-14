@@ -31,6 +31,8 @@ export PATH="${HOME}/.local/bin:${PATH}"
 
 # Don't add duplicates or any line that begins with whitespace to history.
 export HISTCONTROL="ignoredups:ignorespace:erasedups"
+# Add a timestamp to history
+export HISTTIMEFORMAT="%FT%T "
 
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgreprc"
 
