@@ -10,18 +10,25 @@ export FZF_DEFAULT_COMMAND=flist-git
 bind '"\C-r": "\C-x1\e^\er"'
 bind -x '"\C-x1": __fzf_history';
 
-__fzf_history () {
-  __ehc $(history | fzf --tac --tiebreak=index | perl -ne 'm/^\s*([0-9]+)/ and print "!$1"')
+__fzf_history() {
+  __fzf_redraw $(history | fzf --tac --tiebreak=index | perl -ne 'm/^\s*([0-9]+)/ and print "!$1"')
 }
 
-__ehc() {
+__fzf_redraw() {
   if [[ -n $1 ]]; then
     bind '"\er": redraw-current-line'
-    bind '"\e^": magic-space'
+    bind '"\e^": history-expand-line'
     READLINE_LINE=${READLINE_LINE:+${READLINE_LINE:0:READLINE_POINT}}${1}${READLINE_LINE:+${READLINE_LINE:READLINE_POINT}}
     READLINE_POINT=$(( READLINE_POINT + ${#1} ))
   else
     bind '"\er":'
     bind '"\e^":'
   fi
+}
+
+bind '"\C-xe": "\C-xe!\er"'
+bind -x '"\C-xe!": __fzf_exec';
+
+__fzf_exec() {
+  __fzf_redraw $(compgen -c | fzf --tac --tiebreak=index)
 }
