@@ -1,49 +1,32 @@
 #!/usr/bin/env bash
 
-# Assuming we generally work with two browser windows, a full-height "primary"
-# window and a shorter "alt" window (so that when "alt" is in the foreground,
-# the "primary" tabs are still visible behind it), launch or go to browser
-# windows according to the following rules:
-#
-# - 0 browser windows open => Launch browser window
-# - 1 browser window open => Switch to open browser window
-# - 2+ browser windows open
-#   - If invoked without "alt" => go to the first browser window ordered by
-  #   y-offset ascending
-#   - Otherwise => go to second browser window ordered by y-offset ascending
-#
-# Oddly, wmctrl started reporting incorrect heights (at least as of
-# 2022-01-06), so I switched from using window height to y-offset, which is
-# still relatively correct between browser windows.
+set -euo pipefail
+
+#: goto-browser [N]
+#: Go to the Nth browser window where browser windows are ordered by age ascending.
 
 TARGET_CLASS=google-chrome.Google-chrome
 
 main() {
-  windows=$(list_browser_windows_by_y_offset_asc $TARGET_CLASS)
+  local windows= offset= winid=
+  windows=$(list_browser_windows $TARGET_CLASS)
   if [ -z "$windows" ]; then
-    exec sensible-browser
+    exec google-chrome --profile-directory=Default
     return
   fi
 
-  num_windows=$(wc -l <<<"$windows")
-  if [[ "$1" != "alt" ]]; then
-    winid=$(head -1 <<<"$windows")
-  else
-    # The windows are ordered by y-offset ascending, so if we've been asked to
-    # go to the "alternate" (smaller, lower-down) window, that will be the
-    # second one.
-    winid=$(tail -n +2 <<<"$windows" | head -1)
+  offset="${1:-1}"
+  winid=$(tail -n +"$offset" <<<"$windows" | head -1)
+  if [ -n "$winid" ]; then
+    goto_window "$winid"
   fi
-
-  goto_window "$winid"
 }
 
-list_browser_windows_by_y_offset_asc() {
-  wm_class="$1"
+list_browser_windows() {
+  local wm_class="$1"
+  # It seems that wmctrl implicitly lists windows by creation order.
   wmctrl -xGl \
-    | awk "/$wm_class/ {print \$4, \$1}" \
-    | sort -n \
-    | awk '{print $2}'
+    | awk "/$wm_class/ {print \$1}"
 }
 
 goto_window() {
