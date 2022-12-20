@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# Convert input markdown to HTML and copy that to the system clipboard with HTML MIME type.
+# Use this with a visual selection in vim like: :'<,'>w !copy-md-to-html to copy as HTML without
+# replacing the selected text.
+pandoc --from=markdown --to=html | copyq copy text/html -
