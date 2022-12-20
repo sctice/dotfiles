@@ -2,3 +2,6 @@
 setHook(
   packageEvent("grDevices", "onLoad"),
   function(...) grDevices::quartz.options(width = 6, height = 6))
+
+#' Make tibbles print more rows by default
+options(tibble.print_min = 50, tibble.print_max = 50)
