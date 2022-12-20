@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  c "$@" | sed -e '/^$/d'
+}
+
+c() {
+  local rest
+  if [ -z "$1" ]; then
+    echo
+  else
+    rest=$(c "${1:1}")
+    echo "$rest"
+    sed "s/^/${1:0:1}/" <<<"$rest"
+  fi
+}
+
+main "$@"

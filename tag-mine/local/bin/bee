@@ -4,46 +4,60 @@
 #
 #    bee nboeiyg
 #
-# If you put the central letter first, then the first list of candidates
-# produced will include all of the known words that can be spelled with the
-# supplied letters. The last list will include pangram candidates.
+# The first character is required to be in all candidates.
 
 DICT=${DICT:-/usr/share/dict/words}
 
 help() {
-  echo "bee [-p] LETTERS"
+  echo "bee LETTERS"
 }
 
 main() {
-  partial=
-  while getopts "hp" o; do
+  while getopts "h" o; do
     case "$o" in
       h) help; exit ;;
-      p) partial=1 ;;
     esac
   done
   shift $((OPTIND-1))
 
-  chars="$1"
+  if [ -z "${1:-}" ]; then
+    help; exit
+  fi
 
+  local chars first="${1:0:1}"
+  combinations_with_first_letter "$1" | while read chars; do
+    grep -Ei "^[$chars]{3,}$" "$DICT" | check_and_print "$chars"
+  done
+}
+
+combinations_with_first_letter() {
+  local c0="${1:0:1}"
+  echo "$c0"
+  if [ "${#1}" -eq 1 ]; then
+    return
+  fi
+  combinations "${1:1}" | sed "s/^/${c0}/"
+}
+
+check_and_print() {
+  local chars="$1" candidates= buf=
   candidates=$(mktemp bee.cand.XXXXXX)
   buf=$(mktemp bee.buf.XXXXXX)
   trap "rm -f $candidates $buf" EXIT
 
-  if [ -z "$partial" ]; then
-    grep -Ei "^[$chars]+$" $DICT
-  else
-    grep -Ei "[$chars]" $DICT
-  fi >$candidates
+  cat >"$candidates"
 
   for (( i=0; i<${#chars}; i++ )); do
     char=${chars:$i:1}
     grep -i $char $candidates >$buf
     mv $buf $candidates
-    echo "=== ${char}"
-    esc=$(printf '\033')
-    sed -E -e "s,([$chars]),${esc}[0;32m\\1${esc}[0m,ig" $candidates
   done
+
+  if [ -s "$candidates" ]; then
+    echo "=== ${chars}"
+    esc=$(printf '\033')
+    sed -E -e "s,([$chars]),${esc}[0;32m\\1${esc}[0m,ig" "$candidates"
+  fi
 }
 
 main "$@"
