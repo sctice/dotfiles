@@ -14,5 +14,7 @@ endfunction
 function! SetupNotes()
   nnoremap <Leader>nd :call MoveToDone()<CR>
   nnoremap <Leader>nl :call InsertDatedHeading()<CR>i
+  " Replace current markdown list item text with 'nil'
+  noremap <Leader>nn :s/^ *\([ *-]\\|\d\.\) .*/\1 nil<CR>
 endfunction
 autocmd! VimEnter,WinEnter,DirChanged */Sync/{Brain,iFixit}/* call SetupNotes()
