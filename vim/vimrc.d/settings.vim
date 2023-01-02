@@ -13,7 +13,6 @@ syntax on                 " Syntax highlighting
 set autoindent            " By default, match indent of previous line
 set backspace=2           " Allow <BS> to go past last insert
 set colorcolumn=+1        " Draw a line to mark the text width visually
-set cryptmethod=blowfish  " Use blowfish encryption instead of zip
 set expandtab             " Expand tabs with spaces
 set gdefault              " Assume :s uses /g
 set hidden                " Allow hiding abandoned buffers
