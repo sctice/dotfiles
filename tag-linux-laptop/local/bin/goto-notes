@@ -25,6 +25,18 @@ activate_window() {
 launch_editor() {
   local notes_dir_expanded="${notes_dir//\~/$HOME}"
   cd "$notes_dir_expanded"
+  if hash nvim-qt 2>/dev/null; then
+    launch_nvim
+  else
+    launch_gvim
+  fi
+}
+
+launch_nvim() {
+  exec nvim-qt --nofork "${note}"
+}
+
+launch_gvim() {
   exec gvim -f "${note}"
 }
 
