@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if hash nvim 2>/dev/null; then
+  exec nvim "$@"
+else
+  vim_bin=$(which -a vim | grep -v "$0" | head -n1)
+  exec "$vim_bin" "$@"
+fi
