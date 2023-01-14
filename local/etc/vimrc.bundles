@@ -31,7 +31,9 @@ Plugin 'yssl/QFEnter'
 
 " Color schemes.
 
-Plugin 'NLKNguyen/papercolor-theme'
+Plugin 'dracula/vim', { 'name': 'dracula' }
+Plugin 'rakr/vim-one'
+Plugin 'embark-theme/vim', { 'name': 'embark' }
 
 " Language-specific plugins.
 

@@ -51,4 +51,13 @@ augroup END
 
 " Set up our preferred color scheme.
 
-colo PaperColor
+" Allow GUI colors in the terminal (not just cterm colors).
+if has('termguicolors')
+  set termguicolors
+endif
+
+" In case we want to switch to one of our other installed color schemes.
+let g:one_allow_italics = 1
+let g:embark_terminal_italics = 1
+
+colorscheme dracula
