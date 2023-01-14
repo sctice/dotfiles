@@ -26,6 +26,7 @@ call s:loadrc("colors")       " Color scheme, highlighting
 
 " Extras: targeted to specific activities.
 
+call s:loadrc("sneak")        " Like f/F but by bigram and with labels
 call s:loadrc("matchit")      " Make % bounce between more things
 call s:loadrc("sort")         " Sort lines quickly
 call s:loadrc("slime")        " Interact with REPLs
