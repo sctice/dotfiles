@@ -22,7 +22,7 @@ run_vundle() {
   then
     echo -n "Outdated, running vundle... "
     # -E stops vim from complaining about input not coming from a terminal.
-    vim -E -u "${bundles_file}" +PluginInstall +qall
+    vim -Es -u "${bundles_file}" -c PluginUpdate -c qall'!'
     touch "${status_file}"
     echo "Done"
   else
