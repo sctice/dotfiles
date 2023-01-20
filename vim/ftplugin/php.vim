@@ -18,6 +18,6 @@ nmap <buffer> <Leader>u :PhpactorImportClass<CR>
 nmap <buffer> <Leader>ua :PhpactorImportMissingClasses<CR>
 nmap <buffer> <Leader>nn :PhpactorNavigate<CR>
 nmap <buffer> <Leader>o  :PhpactorGotoDefinition edit<CR>
-nmap <buffer> <Leader>fr :PhpactorFindReferences<CR>
+nmap <buffer> <Leader>r :PhpactorFindReferences<CR>
 nmap <buffer> <silent> <Leader>ee :PhpactorExtractExpression<CR>
 vmap <buffer> <silent> <Leader>ee :<C-u>PhpactorExtractExpression<CR>
