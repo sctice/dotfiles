@@ -15,6 +15,7 @@ call s:loadrc("settings")     " General settings
 call s:loadrc("vundle")       " Load plugins
 call s:loadrc("fzf")          " Fuzzy file finder
 call s:loadrc("ctrl-p")       " General fuzzy finder, esp. for buffers
+call s:loadrc("gutentags")    " Automatically keep ctags up to date in bg
 call s:loadrc("choosewin")    " Tmux-like window selection
 call s:loadrc("restorepos")   " Restore cursor pos from last session
 call s:loadrc("tabindent")    " Tab width default, tools to change
