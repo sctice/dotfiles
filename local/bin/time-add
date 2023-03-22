@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# E.g., time-add 12:47 3h45m
+main() {
+  local time="$1" delta="${2:-}"
+  if [ -z "$delta" ]; then
+    time=$(date +"%H:%M")
+    delta="$1"
+  fi
+  if [[ "$delta" =~ ([1-9][0-9]*)h([1-9][0-9]*)m ]]; then
+    # E.g., "12:47 2hour 33min"
+    exp="${time} ${BASH_REMATCH[1]}hour ${BASH_REMATCH[2]}min"
+  elif [[ "$delta" =~ ([1-9][0-9]*)m ]]; then
+    # E.g., "12:47 33min"
+    exp="${time} ${BASH_REMATCH[1]}min"
+  else
+    echo "Invalid delta: '${delta}'"
+    echo "time-add HH:MM NhMm"
+    exit 1
+  fi
+  date -d "${exp}" +"%d %b %H:%M"
+}
+
+main "$@"
