@@ -3,8 +3,8 @@
 set -ueo pipefail
 
 # Volume percentage to use for command "low"
-low_default=20
-high_default=45
+low_default=25
+high_default=50
 
 # Use pactl to both set and show volume of the active sink.
 main() {
