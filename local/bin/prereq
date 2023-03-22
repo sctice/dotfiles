@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+for cmd in "$@"; do
+  if ! hash "$cmd" 2>/dev/null; then
+    echo "missing prerequisite: ${cmd}"
+    exit 1
+  fi
+done

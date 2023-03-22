@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  local proj desc
+
+  prereq bartib fzf || exit 1
+
+  desc=$(select_col 3 "description") || exit 2
+  proj=$(select_col 2 "project") || exit 2
+  bartib start --description "${desc}" --project "${proj}" "$@"
+  bartib list --today
+}
+
+select_col() {
+  local col="$1" prompt="$2" str
+  str=$(bb_list_col "$col" | select_value "$prompt") || exit 2
+  tr -s ' ' '-' <<<"$str"
+}
+
+bb_list_col() {
+  local col="$1"
+  awk -F'|' "{print\$${col}}" "$BARTIB_FILE" \
+    | sort | uniq -c | sort -rn \
+    | awk '{print $2}'
+}
+
+select_value() {
+  local prompt="$1" selection fzf_args
+  selection=$(fzf --print-query --height=20 --border --border-label="$prompt" --bind 'tab:replace-query')
+  if [ $? -eq 130 ]; then
+    exit 2
+  fi
+  tail -n1 <<<"$selection"
+}
+
+main "$@"
