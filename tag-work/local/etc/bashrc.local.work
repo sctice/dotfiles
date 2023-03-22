@@ -8,14 +8,7 @@ fi
 
 # We need to re-export some things that we defined in our common bashrc which
 # the systemrc then overwrote.
-
 export PATH=$(unique_pathlist "${HOME}/.local/bin:${PATH}")
-export PS1="$MY_PS1"
-export PS2="$MY_PS2"
-export EDITOR=$(which vim)
-
-# Set up z (again, because /etc/bashrc stomps all over PROMPT_COMMAND).
-source $HOME/.local/etc/z.sh
 
 # Code dir
 export MY_CODE_DIR="${HOME}/Code/"

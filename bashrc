@@ -56,4 +56,9 @@ case "$-" in
     ;;
 esac
 
+# The `read` above has exit status 1 on EOF, and now that we're reporting
+# non-zero exit status in the prompt, it looks like there's an error on
+# every new shell.
+true
+
 # vim: sw=2 ts=2 sts=2 ft=sh

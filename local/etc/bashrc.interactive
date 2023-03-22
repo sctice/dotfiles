@@ -23,10 +23,32 @@ expand_prompt() {
 # titles with each new prompt. We do this because systems often do this
 # differently, and we'd like the same style across terminal tabs when some are
 # local and others are connected to a remote host.
-export MY_PS1=$(expand_prompt '<WIN><32m>\A <33m>\u<35m>@<33m>\h <34m>\W <1;31m>[\j] <FG>❯<NUL> ')
-export PS1="$MY_PS1"
-export MY_PS2=$(expand_prompt '<33m>...<FG>❯<NUL> ')
+export MY_PS2=$(expand_prompt '<32m>…<NUL> ')
 export PS2="$MY_PS2"
+
+__my_prompt_command() {
+  local last_exit="${PIPESTATUS[-1]}" branch= job_count= jobs= exit=
+
+  if hash git 2>/dev/null; then
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+    if [ -n "$branch" ]; then
+      branch=" <FG><35m>${branch}<FG>"
+    fi
+  fi
+
+  job_count=$(jobs | wc -l)
+  if [ "$job_count" -gt 0 ]; then
+    jobs=" <FG>[<31m>${job_count}<FG>]"
+  fi
+
+  if [ "$last_exit" != "0" ]; then
+    exit="<31m>?${last_exit}"
+  fi
+
+  PS1=$(expand_prompt "<WIN><32m>\\t <33m>\\u<35m>@<33m>\\h <34m>\\w${branch}${jobs} ${exit}\\n<32m>\$ <FG>")
+}
+export PROMPT_COMMAND="__my_prompt_command; ${PROMPT_COMMAND}"
+export PROMPT_DIRTRIM=2
 
 # Explicitly set the editor so git (and others) will use our own vim.
 export EDITOR=$(which vim)

@@ -1,0 +1,11 @@
+# We need to re-export some things that we defined in our common bashrc which
+# the systemrc then overwrote.
+
+export PS2="$MY_PS2"
+export PROMPT_COMMAND='__my_prompt_command;'
+export EDITOR=$(which vim)
+
+# Set up z (again, because /etc/bashrc stomps all over PROMPT_COMMAND).
+source $HOME/.local/etc/z.sh
+
+# vim: sw=2 ts=2 sts=2 ft=sh
