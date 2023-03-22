@@ -36,7 +36,7 @@ set smartcase             " Searches are case-sensitive if caps used
 set splitright            " Default new vsplit to right
 set splitbelow            " Default new hsplit to bottom
 set textwidth=99          " Hard wrap at 99 characters
-set timeoutlen=400        " Time (ms) to wait for mapped sequences
+set timeoutlen=500        " Time (ms) to wait for mapped sequences
 set vb t_vb=              " No visual bell
 set virtualedit=block     " Allow the cursor to go where there's no char
 
