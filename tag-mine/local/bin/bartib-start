@@ -28,11 +28,20 @@ bb_list_col() {
 
 select_value() {
   local prompt="$1" selection fzf_args
-  selection=$(fzf --print-query --height=20 --border --border-label="$prompt" --bind 'tab:replace-query')
+  # Ctrl-n uses the query as the selection even if there was a selected value.
+  selection=$(fzf \
+    --print-query \
+    --height=20 --border --border-label="$prompt" \
+    --bind 'tab:replace-query' \
+    --expect ctrl-n)
   if [ $? -eq 130 ]; then
     exit 2
   fi
-  tail -n1 <<<"$selection"
+  awk '
+    NR == 1 {q = $0}
+    NR == 2 && /^ctrl-n/ {print q; exit}
+    NR == 3 {print $0}
+  ' <<<"$selection"
 }
 
 main "$@"
