@@ -32,7 +32,7 @@ __my_prompt_command() {
   if hash git 2>/dev/null; then
     branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
     if [ -n "$branch" ]; then
-      branch=" <FG><35m>${branch}<FG>"
+      branch=" <90m><35m>${branch}<FG>"
     fi
   fi
 
@@ -42,10 +42,10 @@ __my_prompt_command() {
   fi
 
   if [ "$last_exit" != "0" ]; then
-    exit="<31m>?${last_exit}"
+    exit="<31m>?${last_exit} "
   fi
 
-  PS1=$(expand_prompt "<WIN><32m>\\t <33m>\\u<35m>@<33m>\\h <34m>\\w${branch}${jobs} ${exit}\\n<32m>\$ <FG>")
+  PS1=$(expand_prompt "<WIN><96m>\\t <33m>\\u<35m>@<33m>\\h <34m>\\w${branch}${jobs} ${exit}<FG>𝆨\\n<32m>\$ <FG>")
 }
 export PROMPT_COMMAND="__my_prompt_command; ${PROMPT_COMMAND}"
 export PROMPT_DIRTRIM=2
