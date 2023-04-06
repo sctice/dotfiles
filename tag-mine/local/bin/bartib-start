@@ -38,9 +38,10 @@ select_value() {
     exit 2
   fi
   awk '
-    NR == 1 {q = $0}
-    NR == 2 && /^ctrl-n/ {print q; exit}
-    NR == 3 {print $0}
+    NR == 1 { v = $0 }
+    NR == 2 && /^ctrl-n/ { exit }
+    NR == 3 { v = $0 }
+    END { print v }
   ' <<<"$selection"
 }
 
