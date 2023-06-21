@@ -3,8 +3,12 @@
 set -ueo pipefail
 
 # Volume percentage to use for command "low"
-low_default=25
-high_default=50
+low_default=30
+high_default=60
+
+# The percentage by which a media key volume up/down event raises/lowers volume. Determined via
+# testing.
+media_key_increment=6
 
 # Use pactl to both set and show volume of the active sink.
 main() {
@@ -12,8 +16,8 @@ main() {
     s|st|status) show_status ;;
     [0-9]|[1-9][0-9]|100) set_volume "$1" ;;
     m|mute) set_volume 0 ;;
-    l|low) set_volume "$low_default" ;;
-    h|high) set_volume "$high_default" ;;
+    l|low) set_volume_low ;;
+    h|high) set_volume_high ;;
     f|full) set_volume 100 ;;
     -h|--help|*) show_help ;;
   esac
@@ -57,6 +61,28 @@ show_status() {
   echo "${label}: ${volume}%"
 }
 
+set_volume_low() {
+  if should_show_volume_ui; then
+    set_volume $(("$low_default" - "$media_key_increment"))
+    xdotool key --clearmodifiers XF86AudioRaiseVolume
+  else
+    set_volume "$low_default"
+  fi
+}
+
+should_show_volume_ui() {
+  ! tty -s && hash xdotool 2>/dev/null
+}
+
+set_volume_high() {
+  if should_show_volume_ui; then
+    set_volume $(("$high_default" + "$media_key_increment"))
+    xdotool key --clearmodifiers XF86AudioRaiseVolume
+  else
+    set_volume "$high_default"
+  fi
+}
+
 # Set the default sink to the requested volume (a percentage, 0-100) and then show the current
 # volume if in an interactive terminal.
 set_volume() {
@@ -71,7 +97,7 @@ show_help() {
   echo "    PERCENT"
   echo "    m[ute]"
   echo "    l[ow]"
-  echo "    h[alf]"
+  echo "    h[igh]"
   echo "    f[ull]"
 }
 
