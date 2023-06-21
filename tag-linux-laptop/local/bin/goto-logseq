@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+TARGET_NAME="Logseq"
+
+function main() {
+  winids=$(list_windows $TARGET_NAME)
+  if [ -z "$winids" ]; then
+    exec /usr/bin/flatpak run --branch=stable --arch=x86_64 --command=run.sh --file-forwarding com.logseq.Logseq
+  fi
+
+  winid=$(select_most_recent "$winids")
+  goto_window "$winid"
+}
+
+function list_windows() {
+  name="$1"
+  wmctrl -xl | awk '$3 ~ /logseq.Logseq/ {print $1}'
+}
+
+function select_most_recent() {
+  candidate_winids="$1"
+  for recent_winid in $(list_windows_by_recency); do
+    for cand_winid in $candidate_winids; do
+      # xprop doesn't display leading zeros on hex window ids, but wmctrl does,
+      # so we convert both to decimal for comparison.
+      if [ "$((recent_winid))" = "$((cand_winid))" ]; then
+        echo "$cand_winid"
+        return
+      fi
+    done
+  done
+}
+
+function list_windows_by_recency() {
+  xprop -root \
+    | grep '^_NET_CLIENT_LIST_STACKING' \
+    | grep -o '0x.*' \
+    | tr -s ', ' "\n" \
+    | tac
+}
+
+function goto_window() {
+  wmctrl -ia "$1"
+}
+
+main "$@"
