@@ -11,7 +11,7 @@
 function main() {
   winids=$(list_windows $TARGET_CLASS)
   if [ -z "$winids" ]; then
-    exec x-terminal-emulator
+    exec kitty
     return
   fi
 
