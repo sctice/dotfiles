@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  if tty -s; then
+    # We have a TTY, so procede with interactive upgrade.
+    sudo apt update
+    sudo apt upgrade
+    flatpak update
+  else
+    # No TTY, so launch a terminal and try again.
+    kitty --hold sh -c "upgrade"
+  fi
+}
+
+warn() {
+  echo "$1" 1>&2
+}
+
+main "$@"
