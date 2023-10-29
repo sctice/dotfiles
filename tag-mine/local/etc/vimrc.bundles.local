@@ -1,6 +1,5 @@
 " Generic plugins useful in a variety of situations.
 
-Plugin 'jiangmiao/auto-pairs'
 Plugin 'vim-scripts/a.vim'
 
 " The netrw bundled with the current Vim can't currently open links in the
