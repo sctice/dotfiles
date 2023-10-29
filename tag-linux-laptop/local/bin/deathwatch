@@ -1,0 +1,37 @@
+#!/usr/bin/env Rscript
+
+birthdate <- as.Date("1983-09-12")
+life_exp_mean <- 80
+life_exp_sd <- 15.25
+
+age_years <- as.numeric(difftime(Sys.Date(), birthdate, units = "days") / 365.25)
+quantiles <- c(.01, .25, .5, .75, .95)
+exp_age <- qnorm(quantiles, life_exp_mean, life_exp_sd)
+
+printTimeLeft <- function(age_years, exp_age, show_progress) {
+  pct_dead <- age_years / exp_age
+  pct_dead_int <- round(pct_dead * 100)
+  years_left <- exp_age - age_years
+  cat(sprintf(
+      "%5.2f years left, %d%% dead ",
+      years_left,
+      round(pct_dead_int)
+  ))
+  if (show_progress) {
+    system(paste("progress -n", pct_dead_int))
+  }
+}
+
+for (i in 1:length(quantiles)) {
+  q <- round(quantiles[i] * 100) 
+  cat(sprintf("q%-2d: ", q))
+  printTimeLeft(age_years, exp_age[i], show_progress = (i == 1 || i == length(quantiles)))
+  cat("\n")
+}
+
+cat("\nToday's random simulation\n")
+q <- runif(1)
+random_age <- qnorm(q, life_exp_mean, life_exp_sd)
+cat(sprintf("q%-2d: ", round(q * 100)))
+printTimeLeft(age_years, random_age, show_progress = TRUE)
+cat("\n")

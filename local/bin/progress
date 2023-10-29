@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  local newline=1 percent=
+  while getopts "n" option; do
+    case "$option" in
+      n) newline="" ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  percent="$1"
+
+  if (("$percent" < 0 || "$percent" > 100)); then
+    warn "progress: $percent not in range [0, 100]"
+    exit 1
+  fi
+
+  bar "$percent"
+
+  if [ -n "$newline" ]; then echo; fi
+}
+
+bar() {
+  local n="$1" cs=20
+  echo -ne "|"
+  num_full_blocks=$((n / 5))
+  repeat "\u2588" $num_full_blocks
+
+  remainder=$((n - (5*num_full_blocks)))
+  case "$remainder" in
+    4) echo -en "\u258A" ;;
+    3) echo -en "\u258C" ;;
+    2) echo -en "\u258E" ;;
+    1) echo -en "\u258F" ;;
+  esac
+
+  num_spaces=$((20 - num_full_blocks))
+  if (($remainder > 0)); then
+    num_spaces=$((num_spaces - 1))
+  fi
+  repeat " " $num_spaces
+
+  echo -ne "|"
+}
+
+repeat() {
+  local c="$1" n="$2"
+  if ((n < 1)); then return; fi
+  printf "${c}%.0s" $(seq $n)
+}
+
+warn() {
+  echo "$1" 1>&2
+}
+
+main "$@"
