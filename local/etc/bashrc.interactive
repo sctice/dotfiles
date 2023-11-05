@@ -74,6 +74,9 @@ fi
 if hash _longopt 2>/dev/null; then
   complete -o bashdefault -o default -F _longopt l
   complete -o bashdefault -o default -F _longopt ll
+  if ! complete -p rg 2>/dev/null; then
+    complete -o bashdefault -o default -F _longopt rg
+  fi
 fi
 
 # Aliases
