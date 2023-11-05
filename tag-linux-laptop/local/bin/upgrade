@@ -5,8 +5,8 @@ set -euo pipefail
 main() {
   if tty -s; then
     # We have a TTY, so procede with interactive upgrade.
-    sudo apt update
-    sudo apt upgrade
+    sudo apt-get update -q
+    sudo apt-get upgrade
     flatpak update
   else
     # No TTY, so launch a terminal and try again.
