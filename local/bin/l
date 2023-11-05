@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if hash exa 2>/dev/null; then
+  exec exa --color-scale "$@"
+else
+  exec ls -h --color=auto "$@"
+fi

@@ -1,9 +1,8 @@
 # Functions
 
-# Expands simple text tokens in the passed-in string into a prompt
-# specification suitable for setting as PS1, PS2, and so on. For window and tab
-# titles: the tab title follows '\e]1;', the window title follows '\e]2;', and
-# '\a' ends a title.
+# Expands simple text tokens in the passed-in string into a prompt specification suitable for
+# setting as PS1, PS2, and so on. For window and tab titles: the tab title follows '\e]1;', the
+# window title follows '\e]2;', and '\a' ends a title.
 expand_prompt() {
   read -r -d '' script <<-'EOF'
 	{
@@ -19,10 +18,9 @@ expand_prompt() {
 
 # Exports
 
-# Set the main and continuation prompts. The <WIN> business sets window and tab
-# titles with each new prompt. We do this because systems often do this
-# differently, and we'd like the same style across terminal tabs when some are
-# local and others are connected to a remote host.
+# Set the main and continuation prompts. The <WIN> business sets window and tab titles with each
+# new prompt. We do this because systems often do this differently, and we'd like the same style
+# across terminal tabs when some are local and others are connected to a remote host.
 export MY_PS2=$(expand_prompt '<32m>…<NUL> ')
 export PS2="$MY_PS2"
 
@@ -53,8 +51,8 @@ export PROMPT_DIRTRIM=2
 # Explicitly set the editor so git (and others) will use our own vim.
 export EDITOR=$(which vim)
 
-# Make less process control characters, quit if the input is less than a screen
-# full, not clear the screen initially, and always wrap long lines.
+# Make less process control characters, quit if the input is less than a screen full, not clear the
+# screen initially, and always wrap long lines.
 export PAGER='less'
 export LESS='-R -F -X -+S'
 
@@ -64,16 +62,21 @@ export GPG_TTY=$(tty)
 source $HOME/.local/etc/fzf.sh
 source $HOME/.local/etc/z.sh
 
-# For some reason probably related to login versus non-login shells, tmux
-# doesn't get bash completion enabled by default.
+# For some reason probably related to login versus non-login shells, tmux doesn't get bash
+# completion enabled by default.
 bash_completion=/etc/bash_completion
 if [ -r "$bash_completion" ]; then
   . "$bash_completion"
 fi
 
-# Aliases
+# The _longopt function is provided by bash_completion and is based on the command's --help output.
+# It doesn't work with aliases.
+if hash _longopt 2>/dev/null; then
+  complete -o bashdefault -o default -F _longopt l
+  complete -o bashdefault -o default -F _longopt ll
+fi
 
-alias ll='ls -l'
+# Aliases
 
 alias ssk='ssh-keygen'
 
