@@ -42,5 +42,6 @@
 [include]
 	path = local
 	path = parameters
+	path = delta
 
 # vim: noexpandtab

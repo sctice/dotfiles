@@ -17,7 +17,7 @@ read -r -d '' PARAMS_DEFAULT <<'EOT'
 # vim: noexpandtab
 EOT
 
-function write_git_parameters() {
+write_git_parameters() {
   echo -n "Checking for git parameters... "
 
   local params_path="${HOME}/.config/git/parameters"
@@ -33,4 +33,47 @@ function write_git_parameters() {
   echo "Edit to specify machine-specific git configuration"
 }
 
+read -r -d '' DELTA_CONFIG <<'EOT'
+# This file was created automatically and will be overriden
+
+[core]
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+  syntax-theme = ansi
+  true-color = always
+  line-numbers = true
+  file-style = yellow
+  file-decoration-style = ul ol
+  hunk-header-decoration-style = none
+  hunk-header-style = blue
+	navigate = true    # use n and N to move between diff sections
+	light = false      # dark terminal background
+  hyperlinks = true
+
+[merge]
+	conflictstyle = diff3
+
+[diff]
+	colorMoved = default
+
+# vim: noexpandtab
+EOT
+
+write_delta_config() {
+  echo -n "Writing delta config... "
+  local delta_config_path="${HOME}/.config/git/delta"
+  if hash delta 2>/dev/null; then
+    echo "Found delta, configuring"
+    echo "$DELTA_CONFIG" >"$delta_config_path"
+  else
+    echo "Missing delta, writing empty config"
+    echo >"$delta_config_path"
+  fi
+}
+
 write_git_parameters
+write_delta_config
