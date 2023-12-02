@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+exec gtk-launch org.gimp.GIMP.desktop $(bgrotate current) 2>/dev/null
