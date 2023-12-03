@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# List all commands and drop them into fzf; selecting one will open it in vim.
+main() {
+  local f
+  f=$(select_command) && echo "$f" && vim "$f" || true
+}
+
+select_command() {
+  compgen -c | sort | uniq | expand_path | sort | uniq | limit_to_home | fzf --tiebreak=index
+}
+
+expand_path() {
+  # which -a fails for some commands, but we don't want to fail the pipeline
+  xargs -n 100 which -a || true
+}
+
+limit_to_home() {
+  grep "^/home/$USER"
+}
+
+warn() {
+  echo "$1" 1>&2
+}
+
+main "$@"
