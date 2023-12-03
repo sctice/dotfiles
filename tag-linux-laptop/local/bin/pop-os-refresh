@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+green="\033[0;32m"
+yellow="\033[1;33m"
+red="\033[0;31m"
+nc="\033[0m"
+
+main() {
+  install_apt_deps
+  install_restricted_extras
+  install_pip_deps
+  install_docker
+  configure_sudoers
+  set_hostname
+  set_user_avatar
+  set_chrome_as_default_browser
+  install_1password
+  install_dropbox
+  install_zoom
+  install_delta
+}
+
+install_apt_deps() {
+  ann_section "Installing apt dependencies"
+  apt_dependencies | sudo xargs apt install -y
+  ann_manual "Must log in again after installing ibus-typing-booster to use"
+}
+
+apt_dependencies() {
+  echo rcm # dotfiles
+  echo neovim
+  echo neovim-qt
+  echo ripgrep
+  echo renameutils
+  echo moreutils # vidir, vipe, combine, chronic, ...
+  echo plocate # locate
+  echo tree
+  echo wmctrl # goto-*
+  echo copyq # clipboard
+  echo jq # data munging
+  echo miller # data munging
+  echo visidata # data munging
+  echo sqlite3
+  echo ibus-typing-booster # emoji, must log out/in to enable
+  echo python3-pip
+  echo duplicity # backup cli
+  echo graphicsmagick
+  echo libnotify-bin # rem
+  echo youtube-dl
+  echo flameshot # screen shots
+  echo exuberant-ctags # vim gutentags
+  echo exa # ls replacement
+  echo bat # cat replacement
+  echo bind9-dnsutils # dig
+  echo ruby
+  echo cal
+}
+
+install_restricted_extras() {
+  # Must be run manually because it requires user consent for a few EULAs
+  ann_manual 'Run `sudo apt install ubuntu-restricted-extras` to install extra codecs, fonts, ...'
+}
+
+install_pip_deps() {
+  ann_section "Installing pip dependencies"
+  pip_dependencies | xargs pip3 install
+}
+
+pip_dependencies() {
+  echo boto3 # backups
+  echo beets # music library
+}
+
+install_docker() {
+  add_docker_source
+  install_docker_from_apt
+  add_to_docker_group
+}
+
+add_docker_source() {
+  local keyring_path=/etc/apt/keyrings/docker.gpg
+  local source_path=/etc/apt/sources.list.d/docker.list
+  ann_pending "Adding docker keyring"
+  if [ ! -e $keyring_path ]; then
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl gnupg
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o $keyring_path
+    sudo chmod a+r $keyring_path
+    ann_success "added"
+  else
+    ann_success "already present"
+  fi
+  ann_pending "Adding docker apt source"
+  if [ ! -e $source_path ]; then
+    echo \
+      "deb [arch="$(dpkg --print-architecture)" signed-by=$keyring_path] https://download.docker.com/linux/ubuntu \
+      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+      sudo tee $source_path > /dev/null
+    ann_success "added"
+  else
+    ann_success "already present"
+  fi
+}
+
+install_docker_from_apt() {
+  ann_section "Installing docker packages"
+  sudo apt-get update
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+add_to_docker_group() {
+  ann_pending "Adding to docker group"
+  if ! in_docker_group; then
+    sudo usermod -aG docker $USER
+    ann_success "added"
+    ann_manual 'Restart or run `newgrp docker` to access docker without sudo'
+  else
+    ann_success "already in group"
+  fi
+}
+
+in_docker_group() {
+  groups | grep -q "\<docker\>"
+}
+
+configure_sudoers() {
+  # To allow upgrade script to run without a password
+  local path=/etc/sudoers.d/apt
+  ann_pending "Installing ${path}"
+  if [ ! -e "$path" ]; then
+    ann_success "added"
+    sudo cp ~/.local/share/pop-os-refresh/apt "$path"
+  else
+    ann_success "already present"
+  fi
+}
+
+set_hostname() {
+  ann_manual "Set hostname in Settings -> About -> Device Name"
+}
+
+set_user_avatar() {
+  ann_manual "Set user avatar in Settings -> Users"
+}
+
+set_chrome_as_default_browser() {
+  ann_manual "Set default browser in Settings -> Default Applications"
+}
+
+install_1password() {
+  ann_manual "Install 1Password manually: https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb"
+}
+
+install_dropbox() {
+  ann_manual "Install Dropbox manually: https://www.dropbox.com/install?os=lnx"
+}
+
+install_zoom() {
+  ann_manual "Install Zoom manually: https://zoom.us/download"
+}
+
+install_delta() {
+  ann_manual "Install delta: https://github.com/dandavison/delta/releases"
+}
+
+ann_section() {
+  echo -e "${yellow}==> ${*}...${nc}"
+}
+
+ann_pending() {
+  echo -en "${yellow}===> ${*}... ${nc}"
+}
+
+ann_success() {
+  echo -e "${green}${*}${nc}"
+}
+
+ann_manual() {
+  echo -e "${red}!!! ${*}${nc}"
+}
+
+warn() {
+  echo "$1" 1>&2
+}
+
+main "$@"
