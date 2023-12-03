@@ -26,9 +26,10 @@ __fzf_redraw() {
   fi
 }
 
+# Ctrl-x e to list all executables in path
 bind '"\C-xe": "\C-xe!\er"'
 bind -x '"\C-xe!": __fzf_exec';
 
 __fzf_exec() {
-  __fzf_redraw $(compgen -c | fzf --tac --tiebreak=index)
+  __fzf_redraw $(compgen -c -o nosort | uniq | fzf --tiebreak=index)
 }
