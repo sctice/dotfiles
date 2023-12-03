@@ -14,9 +14,19 @@ BG_SCHEME=daynight
 # some shuffling of the relative order over cycles through all images.
 PROPORTION_TO_SWAP=0.4
 
+# To run automatically, make sure the timer is installed. The systemd timer and service unit are
+# put in place by rcm, so we just need to make sure those are picked up by systemd and that the
+# timer is active.
+#
+#   systemctl --user status bgrotate.timer
+#   systemctl --user daemnon-reload         // pick up new/changed timer/service
+#   systemctl --user enable bgrotate.timer  // start on next boot
+#   systemctl --user start bgrotate.timer   // start now
+
 DAYTIME_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Daytime"
 NIGHTTIME_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Nighttime"
 NATURE_BASE_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Nature"
+PAINTINGS_DIR="${HOME}/Dropbox/Shawn/Shelf/Images/Backgrounds/Paintings"
 
 main() {
   case "$1" in
@@ -68,13 +78,14 @@ rotate_background() {
 
 select_daynight_background() {
   now=$(date "+%H")
-  if [[ "$now" < "17" ]]; then
-    bg_dir="$DAYTIME_DIR"
-  else
-    bg_dir="$NIGHTTIME_DIR"
-  fi
-  start_date=$(date "+%Y-01-01")
+  bg_dir=$(random_choice $DAYTIME_DIR $NIGHTTIME_DIR)
   select_background "$bg_dir"
+}
+
+random_choice() {
+  local args=("$@")
+  local i=$(awk -v n=$# 'BEGIN{print int(rand()*n)}')
+  echo ${args[$i]}
 }
 
 select_nature_background() {
@@ -102,6 +113,10 @@ select_season() {
   else
     echo -e "4-Fall\tSep 22"
   fi
+}
+
+select_painting_background() {
+  select_background "$PAINTINGS_DIR"
 }
 
 select_background() {
