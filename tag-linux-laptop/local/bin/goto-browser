@@ -5,7 +5,9 @@ set -euo pipefail
 #: goto-browser [N]
 #: Go to the Nth browser window where browser windows are ordered by age ascending.
 
-TARGET_CLASS=google-chrome.Google-chrome
+#TARGET_CLASS=google-chrome.Google-chrome
+#TARGET_CLASS=vivaldi-stable.Vivaldi-stable
+TARGET_CLASS=chromium-browser.Chromium-browser
 
 main() {
   local windows= offset= winid=
