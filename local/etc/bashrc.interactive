@@ -72,6 +72,7 @@ fi
 # The _longopt function is provided by bash_completion and is based on the command's --help output.
 # It doesn't work with aliases.
 if hash _longopt 2>/dev/null; then
+  complete -o bashdefault -o default -F _longopt b
   complete -o bashdefault -o default -F _longopt l
   complete -o bashdefault -o default -F _longopt ll
   if ! complete -p rg 2>/dev/null; then
