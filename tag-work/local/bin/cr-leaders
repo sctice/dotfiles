@@ -54,7 +54,7 @@ EOT;
    exec($sshCmd, $lines);
 
    $byWeek = array_reduce($weekNames, function($carry, $timeStr) {
-      $weekName = strftime('%G-%V', strtotime($timeStr));
+      $weekName = (new DateTime($timeStr))->format('Y-W');
       $carry[$weekName] = [];
       return $carry;
    }, []);
