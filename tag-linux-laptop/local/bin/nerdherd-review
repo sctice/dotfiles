@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+shortopts=hd:p
+longopts=help,closed:,prs
+TEMP=$(getopt -o $shortopts --long $longopts -n gh-issues -- "$@")
+if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
+
+closed='-1 week 00:00'
+prs=
+
+# The quotes around $TEMP are essential!
+eval set -- "$TEMP"
+while true; do
+  case "$1" in
+    -h | --help) print_help; exit; shift ;;
+    -d | --closed) closed="$2"; shift 2 ;;
+    -p  | --prs) prs="--prs"; shift ;;
+    --) shift; break ;;
+    *) echo "error parsing options"; exit 1 ;;
+  esac
+done
+
+cmd="cd Shelf/team-view && ./gh-issues -M --closed '${closed}' ${prs} --json"
+echo "$cmd"
+ssh com "$cmd" \
+  | jq -r '.url' \
+  | xargs -n1 open 2>/dev/null 1>&2
