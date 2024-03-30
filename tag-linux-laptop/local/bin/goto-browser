@@ -7,7 +7,7 @@ set -euo pipefail
 
 #TARGET_CLASS=google-chrome.Google-chrome
 #TARGET_CLASS=vivaldi-stable.Vivaldi-stable
-TARGET_CLASS=chromium-browser.Chromium-browser
+TARGET_CLASS='Chromium$'
 
 main() {
   local windows= offset= winid=
