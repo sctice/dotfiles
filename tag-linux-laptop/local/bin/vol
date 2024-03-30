@@ -4,7 +4,7 @@ set -ueo pipefail
 
 # Volume percentage to use for command "low"
 low_default=30
-high_default=60
+high_default=54
 
 # The percentage by which a media key volume up/down event raises/lowers volume. Determined via
 # testing.
