@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-if hash batcat 2>/dev/null || hash bat 2>/deb/null; then
+if hash batcat 2>/dev/null; then
   exec batcat "$@"
+elif hash bat 2>/dev/null; then
+  exec bat "$@"
 else
   exec cat "$@"
 fi
