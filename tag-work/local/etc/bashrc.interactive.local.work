@@ -11,4 +11,7 @@ source $HOME/.local/etc/z.sh
 # Another system default that shadows my own ll script.
 unalias ll
 
+# `db` would otherwise shadow my own `db` command
+unalias db
+
 # vim: sw=2 ts=2 sts=2 ft=sh

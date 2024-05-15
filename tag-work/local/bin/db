@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+#: Usage: db [-d DB] [HOST]
+#:        db -l
+#
+#: -d DB --database  Use DB (default: ifixit_guide)
+#: -l --list-dbs     List understood database hosts
+#:
+#: HOST defaults to dbbislave
+main() {
+  local region="us-east-1" db="ifixit_guide" host ip local_port
+
+  local shortopts=hd:l
+  local longopts=help,database:,list-dbs:
+  TEMP=$(getopt -o $shortopts --long $longopts -n db -- "$@")
+  if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
+
+  eval set -- "$TEMP"
+  while true; do
+    case "$1" in
+      -h | --help) print_help; exit; ;;
+      -d | --database) db="$2"; shift 2 ;;
+      -l | --list-hosts) list_hosts; exit; ;;
+      --) shift; break ;;
+      *) echo "error parsing options"; exit 1 ;;
+    esac
+  done
+
+  case "${1:-dbbislave}" in
+    bi*|dbbi*) host=dbbislave ;;
+    p*|m*) host=dbmaster ;;
+    r*|s*) host=dbslave ;;
+    u*|ci*) host=ci-db; region=us-west-1 ;;
+    d*|com*) host=devdb; region=us-west-1 ;;
+    *) warn "unrecognized host: $1"; exit 1 ;;
+  esac
+
+  ip=$(ip_for_name "$host" "$region")
+  local_port=$(get_random_unbound_port)
+  [ -n "$host" ] \
+    && setup_ssh_tunnel "$host" "$ip" "$region" "$local_port" \
+    && run_mycli "$local_port" "$host" "$db"
+}
+
+list_hosts() {
+    echo "dbbislave (bi) -- default"
+    echo "dbmaster (primary)"
+    echo "dbslave (replica)"
+    echo "ci-db (ci, ubreakit)"
+    echo "devdb (dev, cominor)"
+}
+
+ip_for_name() {
+  local name="$1" region="${2:-us-east-1}" public_dns
+  dig +short $(public_dns_for_name "$name" "$region")
+}
+
+public_dns_for_name() {
+  local name="$1" region="${2:-us-east-1}"
+  aws ec2 --region="$region" describe-instances \
+    --filters "Name=tag:Name,Values=${name}" \
+    --query 'Reservations[].Instances[].NetworkInterfaces[0].Association.PublicDnsName' \
+    | jq --raw-output '.[]' \
+    | head -n1
+}
+
+get_random_unbound_port() {
+  for i in {1..5}; do
+    port=$((10001 + RANDOM % 55535))
+    if is_port_unbound $port; then
+      echo $port
+      return 0
+    fi
+  done
+  warn "failed to find unbound port"
+  exit 2
+}
+
+is_port_unbound() {
+  local port=$(printf '%04X' $1)
+  ! grep -qE "^[^:]+: [^:]+:$port" /proc/net/tcp
+}
+
+setup_ssh_tunnel() {
+  local host="$1" ip="$2" region="$3" local_port="$4" cert control_path
+  cert=/var/ifixit/aws/id_rsa-gsg-keypair
+  if [[ "$region" = us-west* ]]; then
+    cert=/var/ifixit/aws/dev_id_rsa
+  fi
+
+  control_path=$(mktemp --dry-run --tmpdir db-control-path.XXXXX)
+  warn "db = $host at $ip in $region (local port $local_port)"
+  warn "control_path = $control_path"
+  ssh root@$ip \
+    -i "$cert" \
+    -S "$control_path" -M \
+    -L ${local_port}:localhost:3306 \
+    -fN
+  # Beacuse of the fork from `-f`, the `ssh` command itself often can exit zero and then the forked
+  # process can exit non-zero, which `set -e` doesn't catch. Luckily, the non-zero exit is still
+  # captured by $? because it comes later
+  [ $? -ne 0 ] && exit 3
+  trap "ssh -S $control_path -O exit root@$ip >/dev/null 2>&1" EXIT ERR
+}
+
+run_mycli() {
+  local local_port="$1" host="$2" db="$3" prompt='\u@'"$host"' \d \R:\m:\s\nmysql> '
+  command mycli --user root --host localhost --port ${local_port} --prompt "$prompt" "$db"
+}
+
+warn() {
+  echo "$1" 1>&2
+}
+
+print_help() {
+  sed -nE -e '/^#:/ {s/#: ?//; p}' "${BASH_SOURCE[0]}"
+}
+
+main "$@"
