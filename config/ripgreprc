@@ -2,6 +2,7 @@
 --glob-case-insensitive
 --no-heading
 
+--glob=!/Tests/Data/**
 --glob=!/tags
 --type-add=phtml:*.{phtml}
 --type-add=css:*.{less}
