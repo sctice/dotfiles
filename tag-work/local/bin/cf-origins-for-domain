@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  if [ -z "$1" ]; then
+    warn "missing domain"
+    warn "example: cf-origins-for-domain guide-images.cdn.ifixit.com"
+    exit 1
+  fi
+
+  aws cloudfront list-distributions | jq --arg domain "${1:-guide-images.cdn.ifixit.com}" '
+    .DistributionList.Items[]
+    | {
+      Id,
+      Aliases: (.Aliases.Items // []),
+      Origins: (.Origins.Items | map(.DomainName) // [])
+    }
+    | select(.Aliases | index($domain))
+  '
+}
+
+warn() {
+  echo "$1" 1>&2
+}
+
+main "$@"
