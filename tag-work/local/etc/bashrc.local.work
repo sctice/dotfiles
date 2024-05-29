@@ -8,7 +8,7 @@ fi
 
 # We need to re-export some things that we defined in our common bashrc which
 # the systemrc then overwrote.
-export PATH=$(unique_pathlist "${HOME}/.local/bin:${PATH}")
+export PATH=$(unique_pathlist "${HOME}/.local/bin:${HOME}/.local/share/npm/bin:${PATH}")
 
 # Code dir
 export MY_CODE_DIR="${HOME}/Code/"
