@@ -56,8 +56,4 @@ if has('termguicolors')
   set termguicolors
 endif
 
-" In case we want to switch to one of our other installed color schemes.
-let g:one_allow_italics = 1
-let g:embark_terminal_italics = 1
-
-colorscheme dracula
+colorscheme brogrammer
