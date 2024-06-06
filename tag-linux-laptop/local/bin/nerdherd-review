@@ -20,7 +20,7 @@ while true; do
   esac
 done
 
-cmd="cd Shelf/team-view && ./gh-issues -M --closed '${closed}' ${prs} --json"
+cmd="cd Shelf/team-view && ./gh-issues --closed '${closed}' ${prs} --json"
 echo "$cmd"
 ssh com "$cmd" \
   | jq -r '.url' \
