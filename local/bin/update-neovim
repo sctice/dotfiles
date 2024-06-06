@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# See https://github.com/neovim/neovim/blob/master/INSTALL.md#linux
+
+set -euo pipefail
+set -x
+
+stow_dir="$HOME/.local/opt"
+stow_package=nvim-linux64
+tarball=nvim-linux64.tar.gz
+
+cd $stow_dir
+
+curl -sLO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+rm -rf $stow_package
+tar -xzf $tarball
+rm -f $tarball
+
+stow --restow $stow_package
