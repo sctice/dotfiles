@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# See https://sw.kovidgoyal.net/kitty/binary/
+
+set -euo pipefail
+set -x
+
+stow_dir="$HOME/.local/opt"
+
+curl -sL https://sw.kovidgoyal.net/kitty/installer.sh \
+  | sh /dev/stdin dest=$stow_dir launch=n
+
+cd $stow_dir
+
+# I have kitty.desktop customized with a different icon, so I don't want the package's version
+stow --restow kitty.app --ignore='kitty\.desktop'
+
+# Call out any changes in kitty.desktop
+desktop_path="share/applications/kitty.desktop"
+git diff $(dirname $stow_dir)/$desktop_path $stow_dir/kitty.app/$desktop_path
