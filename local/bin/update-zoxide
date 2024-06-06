@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# See https://sw.kovidgoyal.net/kitty/binary/
+
+set -euo pipefail
+set -x
+
+local_dir=$HOME/.local
+
+curl -sLS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh \
+  | bash -s -- --bin-dir=$local_dir/bin --man-dir=$local_dir/man
