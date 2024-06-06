@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# See https://github.com/neovim/neovim/blob/master/INSTALL.md#linux
+
+set -euo pipefail
+set -x
+
+tmpdir=$(mktemp -d)
+stow_dir="$HOME/.local/opt"
+stow_package=neovide.app
+app_image=neovide.AppImage
+
+trap "rm -rf $tmpdir" EXIT
+
+cd $tmpdir
+
+curl -sLO https://github.com/neovide/neovide/releases/latest/download/neovide.AppImage
+chmod u+x $app_image
+./$app_image --appimage-extract
+rm -rf $stow_dir/$stow_package
+mv squashfs-root/usr $stow_dir/$stow_package
+
+cd $stow_dir
+
+stow --restow --defer=lib/libpng16.so.16 $stow_package
