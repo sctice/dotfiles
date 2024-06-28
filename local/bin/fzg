@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+#: Usage: fzg [git log options]
+#:
+#: Load recent git commits into fzf, preview the highlighted commit, and pull up the git log of the
+#: selected commit. Any arguments are passed through to the initial `git log`.
+main() {
+  local log_line
+  log_line=$(git_log "$@" | user_filter)
+  if [ -n "$log_line" ]; then
+    show_log_line <<<"$log_line"
+  fi
+}
+
+git_log() {
+  git log \
+    --color=always \
+    --since='-1 month' \
+    --pretty=format:'%Cgreen%h%Creset %<(20,mtrunc)%aE %<(15)%Cblue%ch%Creset %s' \
+    "$@"
+}
+
+user_filter() {
+  fzf --ansi --no-mouse \
+    --preview='bash -c "echo {} | cut -d\" \" -f1 | xargs git log --color=always -1 -p"' 
+}
+
+show_log_line() {
+  git log -p $(cut -d' ' -f1)
+}
+
+main "$@"
