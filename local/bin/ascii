@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  print_table | fzf --header-lines=2 --no-mouse --tiebreak=chunk,begin
+}
+
+print_table() {
+cat <<'EOT'
+Char                       Hex    Dec   Oct
+───────────────────────────────────────────
+NUL '\0' (null character)  00     0     000
+SOH (start of heading)     01     1     001
+STX (start of text)        02     2     002
+ETX (end of text)          03     3     003
+EOT (end of transmission)  04     4     004
+ENQ (enquiry)              05     5     005
+ACK (acknowledge)          06     6     006
+BEL '\a' (bell)            07     7     007
+BS  '\b' (backspace)       08     8     010
+HT  '\t' (horizontal tab)  09     9     011
+LF  '\n' (new line)        0A     10    012
+VT  '\v' (vertical tab)    0B     11    013
+FF  '\f' (form feed)       0C     12    014
+CR  '\r' (carriage ret)    0D     13    015
+SO  (shift out)            0E     14    016
+SI  (shift in)             0F     15    017
+DLE (data link escape)     10     16    020
+DC1 (device control 1)     11     17    021
+DC2 (device control 2)     12     18    022
+DC3 (device control 3)     13     19    023
+DC4 (device control 4)     14     20    024
+NAK (negative ack.)        15     21    025
+SYN (synchronous idle)     16     22    026
+ETB (end of trans. blk)    17     23    027
+CAN (cancel)               18     24    030
+EM  (end of medium)        19     25    031
+SUB (substitute)           1A     26    032
+ESC (escape)               1B     27    033
+FS  (file separator)       1C     28    034
+GS  (group separator)      1D     29    035
+RS  (record separator)     1E     30    036
+US  (unit separator)       1F     31    037
+SPACE                      20     32    040
+!                          21     33    041
+"                          22     34    042
+#                          23     35    043
+$                          24     36    044
+%                          25     37    045
+&                          26     38    046
+'                          27     39    047
+(                          28     40    050
+)                          29     41    051
+*                          2A     42    052
++                          2B     43    053
+,                          2C     44    054
+-                          2D     45    055
+.                          2E     46    056
+/                          2F     47    057
+0                          30     48    060
+1                          31     49    061
+2                          32     50    062
+3                          33     51    063
+4                          34     52    064
+5                          35     53    065
+6                          36     54    066
+7                          37     55    067
+8                          38     56    070
+9                          39     57    071
+:                          3A     58    072
+;                          3B     59    073
+<                          3C     60    074
+=                          3D     61    075
+>                          3E     62    076
+?                          3F     63    077
+@                          40     64    100
+A                          41     65    101
+B                          42     66    102
+C                          43     67    103
+D                          44     68    104
+E                          45     69    105
+F                          46     70    106
+G                          47     71    107
+H                          48     72    110
+I                          49     73    111
+J                          4A     74    112
+K                          4B     75    113
+L                          4C     76    114
+M                          4D     77    115
+N                          4E     78    116
+O                          4F     79    117
+P                          50     80    120
+Q                          51     81    121
+R                          52     82    122
+S                          53     83    123
+T                          54     84    124
+U                          55     85    125
+V                          56     86    126
+W                          57     87    127
+X                          58     88    130
+Y                          59     89    131
+Z                          5A     90    132
+[                          5B     91    133
+\  '\\'                    5C     92    134
+]                          5D     93    135
+^                          5E     94    136
+_                          5F     95    137
+`                          60     96    140
+a                          61     97    141
+b                          62     98    142
+c                          63     99    143
+d                          64     100   144
+e                          65     101   145
+f                          66     102   146
+g                          67     103   147
+h                          68     104   150
+i                          69     105   151
+j                          6A     106   152
+k                          6B     107   153
+l                          6C     108   154
+m                          6D     109   155
+n                          6E     110   156
+o                          6F     111   157
+p                          70     112   160
+q                          71     113   161
+r                          72     114   162
+s                          73     115   163
+t                          74     116   164
+u                          75     117   165
+v                          76     118   166
+w                          77     119   167
+x                          78     120   170
+y                          79     121   171
+z                          7A     122   172
+{                          7B     123   173
+|                          7C     124   174
+}                          7D     125   175
+~                          7E     126   176
+DEL                        7F     127   177
+EOT
+}
+
+main "$@"
