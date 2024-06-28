@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+main() {
+  list_employees | trim_header_and_footer | fzf --no-mouse --header-lines=2
+}
+
+list_employees() {
+  mysql -t -u root -h db.cominor.com ifixit_cart <<<'
+    select
+      employeeid, userid, first_name, last_name, email, github_username,
+      department, sub_department,
+      from_unixtime(start_date, "%Y-%m-%d") start, from_unixtime(end_date, "%Y-%m-%d") end
+    from employees
+    order by active asc, start_date desc
+  '
+}
+
+trim_header_and_footer() {
+  tail -n +2 | head -n -1
+}
+
+main "$@"
