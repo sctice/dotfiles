@@ -23,5 +23,5 @@ done
 cmd="cd Shelf/team-view && ./gh-issues --closed '${closed}' ${prs} --json"
 echo "$cmd"
 ssh com "$cmd" \
-  | jq -r '.url' \
+  | jq -r '.[].url' \
   | xargs -n1 open 2>/dev/null 1>&2
