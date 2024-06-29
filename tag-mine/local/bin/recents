@@ -1,56 +1,131 @@
 #!/usr/bin/env bash
 
-# List files modified in the last 28 days along with the date of their
-# modification and the first line of their contents. The main use case is to
-# review recently-modified Brain files which mostly don't have obvious
-# filenames but do usually have a meaningful title on the first line. This is
-# why the space left for the filename is quite small.
+set -euo pipefail
 
-DAYS=${DAYS:-28}
-MAX_LEN_FILENAME=${MAX_LEN_FILENAME:-32}
-MAX_LEN_TITLE=${MAX_LEN_TITLE:-50}
+MIN_PREVIEW=20
 
-function main() {
-  find_recents "${1:-.}" | order_by_time_desc | while read path; do
-    mtime=$(get_mtime "$path" "%Y-%m-%d %H:%M")
+_buffer=$(mktemp) && trap 'rm -f "$_buffer"' EXIT
+_cols=$(tput cols 2>/dev/null || echo 200)
+
+#: Usage: recents [-a] [-t TYPE] [-x PRUNE] [-c CUTOFF] [-p|-f] 
+#:
+#: -a --all            Show hidden files
+#: -t TYPE --type      A `find` -type argument (e.g., f,d)
+#: -x PRUNE --prune    A `find` -name argument; matches will be pruned from the search
+#: -c CUTOFF --cutoff  <M>m or <D>d; limit matches to files modified within M minutes or D days
+#: -p --preview        Display the first line of the file to the right of the path
+#: -f --files-only     Display only file paths
+#:
+#: Previews will be aligned to the right of the longest path and extend up to the end of the line.
+#: If there isn't enough room on the line for the timestamp, path, and minimum preview length
+#: (default 20), then long paths will be truncated at the front to make room.
+main() {
+  local show_hidden= type= prunes=() cutoff= display=cat
+
+  local shortopts=hat:x:c:pf
+  local longopts=help,all,type:,prune:,cutoff:,preview,files-only
+  local TEMP=$(getopt -o $shortopts --long $longopts -n recents -- "$@")
+  if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
+  eval set -- "$TEMP"
+  while true; do
+    case "$1" in
+      -h | --help) print_help; exit ;;
+      -a | --all) show_hidden=1; shift ;;
+      -t | --type) type=$2; shift 2 ;;
+      -p | --preview) display=preview; shift ;;
+      -x | --prune) prunes+=(-o -name "$2"); shift 2 ;;
+      -c | --cutoff) cutoff="$(parse_cutoff $2)"; shift 2 ;;
+      -f | --files-only) display=files-only; shift ;;
+      --) shift; break ;;
+      *) echo "error parsing options"; exit 1 ;;
+    esac
+  done
+
+  find_recents "${1:-.}" "$show_hidden" "$type" "$cutoff" "${prunes[@]}" \
+    | order_by_time_asc \
+    | case "$display" in
+      cat) cat - ;;
+      files-only) display_files_only ;;
+      preview) display_preview ;;
+    esac
+}
+
+parse_cutoff() {
+  if [[ "$1" =~ ^([0-9]+)(m|d) ]]; then
+    offset="${BASH_REMATCH[1]}"
+    case "${BASH_REMATCH[2]}" in
+      m) echo "-mmin -$offset" ;;
+      d) echo "-mtime -$offset" ;;
+    esac
+  else
+    echo "-mtime -28"
+  fi
+}
+
+find_recents() {
+  local path="$1" show_hidden="$2" type="$3" cutoff="$4"
+  shift 4
+  local prunes=("$@")
+  local exclude=() select_files=
+  if [ -z "$show_hidden" ]; then
+    prunes+=(-o -name '.?*')
+  fi
+  if [ ${#prunes[@]} -gt 0 ]; then
+    exclude=('(' -false "${prunes[@]}" ')' -prune -o)
+  fi
+  if [ -n "$type" ]; then
+    type="-type $type"
+  fi
+  find "$path" \
+    "${exclude[@]}" \
+    $type \
+    $cutoff \
+    -printf "%TF %TT  %p\n" \
+    2>/dev/null
+}
+
+order_by_time_asc() {
+  # Sort and strip the fractional seconds
+  sort | sed -Ee 's/^([^ ]+) ([^.]+)\.[0-9]+/\1 \2/'
+}
+
+display_files_only() {
+  sed -Ee 's/^[^ ]+ [^ ]+ +//'
+}
+
+display_preview() {
+  local timestamp_len= max_path_len= preview_len=
+
+  cat - >"$_buffer"
+  timestamp_len=$(head -n1 "$_buffer" | awk '{print length($1) + length($2) + 1}')
+  max_path_len=$(sed -Ee 's/^[^ ]+ [^ ]+ //' <"$_buffer" | find_max_line_length)
+  if (( $timestamp_len + 2 + $max_path_len + 2 + $MIN_PREVIEW > $_cols )); then
+    max_path_len=$(($_cols - $MIN_PREVIEW - 4 - $timestamp_len))
+    preview_len=$MIN_PREVIEW
+  else
+    preview_len=$(($_cols - 2 - $max_path_len - 2 - $timestamp_len))
+  fi
+
+  cat "$_buffer" | while read date time path; do
     if file -b --mime "$path" | grep -qv "^text"; then
-      title="<binary>"
+      preview="<binary>"
     else
-      title=$(head -n1 "$path")
+      preview=$(head -c"$preview_len" "$path" | head -n1)
     fi
-    filename=$(basename "$path")
-    filename_trunc="${filename:${#filename}<$MAX_LEN_FILENAME?0:-$MAX_LEN_FILENAME}"
-    printf "%s  %32s  %s\n" "$mtime" "$filename_trunc" "${title:0:$MAX_LEN_TITLE}"
+    path_trunc="${path:${#path}<$max_path_len?0:-$max_path_len}"
+    printf "%s %s  %-${max_path_len}s  %s\n" "$date" "$time" "$path_trunc" "$preview"
   done
 }
 
-function find_recents() {
-  find "$1" -path '.?*' -prune -type f -not -name '.?*' -mtime -$DAYS -print
+find_max_line_length() {
+  awk '
+    length > max_length { max_length = length }
+    END { print max_length }
+  '
 }
 
-function order_by_time_desc() {
-  xargs ls -t
-}
-
-function get_mtime() {
-  case "$OSTYPE" in
-    linux*) get_mtime_linux "$@" ;;
-    darwin*) get_mtime_darwin "$@" ;;
-  esac
-}
-
-function get_mtime_darwin() {
-  local path="$1"
-  local format="$2"
-  mtime=$(stat --format '%m' "$path")
-  date -r "$mtime" "+$format"
-}
-
-function get_mtime_linux() {
-  local path="$1"
-  local format="$2"
-  mtime=$(stat --format '%Y' "$path")
-  date --date=@$mtime "+$format"
+print_help() {
+  sed -nE -e '/^#:/ {s/#: ?//; p}' "${BASH_SOURCE[0]}"
 }
 
 main "$@"
