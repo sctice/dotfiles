@@ -5,10 +5,9 @@ longopts=help,closed:,prs
 TEMP=$(getopt -o $shortopts --long $longopts -n gh-issues -- "$@")
 if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
 
-closed='-1 week 00:00'
+closed="1w"
 prs=
 
-# The quotes around $TEMP are essential!
 eval set -- "$TEMP"
 while true; do
   case "$1" in
@@ -20,7 +19,7 @@ while true; do
   esac
 done
 
-cmd="cd Shelf/team-view && ./gh-issues --closed '${closed}' ${prs} --json"
+cmd="gh-issues --closed '${closed}' ${prs} --json"
 echo "$cmd"
 ssh com "$cmd" \
   | jq -r '.[].url' \
