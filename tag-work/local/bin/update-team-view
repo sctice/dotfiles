@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+set -x
+
+stow_dir="$HOME/.local/opt"
+cd $stow_dir
+
+# Filter out some warnings that seem to be related to other symlinks in the bin dir. As far as I
+# can tell, everything still works as expected.
+stow --restow -v team-view \
+  --target="$HOME/.local/bin" \
+  --ignore='async' \
+  --ignore='tags' \
+  2>&1 \
+  | grep -v 'BUG in find_stowed_path'
