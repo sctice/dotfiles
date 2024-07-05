@@ -7,23 +7,23 @@ MIN_PREVIEW=20
 _buffer=$(mktemp) && trap 'rm -f "$_buffer"' EXIT
 _cols=$(tput cols 2>/dev/null || echo 200)
 
-#: Usage: recents [-a] [-t TYPE] [-x PRUNE] [-c CUTOFF] [-p|-f] 
+#: Usage: recents [-a] [-t TYPE] [-x PRUNE] [-c SINCE] [-p|-f] 
 #:
-#: -a --all            Show hidden files
-#: -t TYPE --type      A `find` -type argument (e.g., f,d)
-#: -x PRUNE --prune    A `find` -name argument; matches will be pruned from the search
-#: -c CUTOFF --cutoff  <M>m or <D>d; limit matches to files modified within M minutes or D days
-#: -p --preview        Display the first line of the file to the right of the path
-#: -f --files-only     Display only file paths
+#: -a --all           Show hidden files
+#: -t TYPE --type     A `find` -type argument (e.g., f,d)
+#: -x PRUNE --prune   A `find` -name argument; matches will be pruned from the search
+#: -s SINCE --since   <M>m or <D>d; limit matches to files modified within M minutes or D days
+#: -p --preview       Display the first line of the file to the right of the path
+#: -f --files-only    Display only file paths
 #:
 #: Previews will be aligned to the right of the longest path and extend up to the end of the line.
 #: If there isn't enough room on the line for the timestamp, path, and minimum preview length
 #: (default 20), then long paths will be truncated at the front to make room.
 main() {
-  local show_hidden= type= prunes=() cutoff= display=cat
+  local show_hidden= type= prunes=() since= display=cat
 
-  local shortopts=hat:x:c:pf
-  local longopts=help,all,type:,prune:,cutoff:,preview,files-only
+  local shortopts=hat:x:s:pf
+  local longopts=help,all,type:,prune:,since:,preview,files-only
   local TEMP=$(getopt -o $shortopts --long $longopts -n recents -- "$@")
   if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
   eval set -- "$TEMP"
@@ -34,14 +34,14 @@ main() {
       -t | --type) type=$2; shift 2 ;;
       -p | --preview) display=preview; shift ;;
       -x | --prune) prunes+=(-o -name "$2"); shift 2 ;;
-      -c | --cutoff) cutoff="$(parse_cutoff $2)"; shift 2 ;;
+      -s | --since) since="$(parse_since $2)"; shift 2 ;;
       -f | --files-only) display=files-only; shift ;;
       --) shift; break ;;
       *) echo "error parsing options"; exit 1 ;;
     esac
   done
 
-  find_recents "${1:-.}" "$show_hidden" "$type" "$cutoff" "${prunes[@]}" \
+  find_recents "${1:-.}" "$show_hidden" "$type" "$since" "${prunes[@]}" \
     | order_by_time_asc \
     | case "$display" in
       cat) cat - ;;
@@ -50,7 +50,7 @@ main() {
     esac
 }
 
-parse_cutoff() {
+parse_since() {
   if [[ "$1" =~ ^([0-9]+)(m|d) ]]; then
     offset="${BASH_REMATCH[1]}"
     case "${BASH_REMATCH[2]}" in
@@ -63,7 +63,7 @@ parse_cutoff() {
 }
 
 find_recents() {
-  local path="$1" show_hidden="$2" type="$3" cutoff="$4"
+  local path="$1" show_hidden="$2" type="$3" since="$4"
   shift 4
   local prunes=("$@")
   local exclude=() select_files=
@@ -79,7 +79,7 @@ find_recents() {
   find "$path" \
     "${exclude[@]}" \
     $type \
-    $cutoff \
+    $since \
     -printf "%TF %TT  %p\n" \
     2>/dev/null
 }
