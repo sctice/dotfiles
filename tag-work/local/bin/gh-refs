@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+refs=()
+seen=$(mktemp); trap "rm -f \"$seen\"" EXIT
+
+cols=$(tput cols || echo 200)
+output_json=
+
+#: Usage: gh-refs SHA|URL
+#:
+#: -o iFixit --owner  The owner under which to search
+#: -d 5 --max-depth   The maximum depth of a reference
+#: -j --json          Output JSON
+main() {
+  local owner=iFixit max_depth=5
+
+  local shortopts=ho:d:j
+  local longopts=help,owner:,max-depth:,json
+  TEMP=$(getopt -o $shortopts --long $longopts -n gh-issues -- "$@")
+  if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
+
+  eval set -- "$TEMP"
+  while true; do
+    case "$1" in
+      -h | --help) print_help; exit; shift ;;
+      -o | --owner) owner="$1"; shift ;;
+      -d | --max-depth) max_depth=$2; shift 2;;
+      -j | --json) output_json=1; shift ;;
+      --) shift; break ;;
+      *) echo "error parsing options"; exit 1 ;;
+    esac
+  done
+
+  if (( $# < 1 )); then
+    echo 'gh-refs: missing SHA or URL' 2>&1
+    print_help && exit 1
+  fi
+
+  explore_refs "$1" "$owner" "$max_depth"
+}
+
+explore_refs() {
+  local root="$1" owner="$2" max_depth="$3"
+  local ref= url= depth= to_add=
+
+  if [[ "$root" =~ ^[0-9a-f]{6,40}$ ]]; then
+    mapfile -t refs < <(find_commit_prs "$owner" "$root")
+  else
+    mapfile -t refs < <(init_from_url "$root")
+  fi
+
+  while (( "${#refs[@]}" > 0 )); do
+    ref="${refs[-1]}"; unset refs[-1]
+    url=$(jq -r '.url' <<<"$ref")
+    depth=$(jq -r '.depth' <<<"$ref")
+
+    output "$ref"
+
+    if ((depth == max_depth)); then continue; fi
+
+    # We want to visit the most significant refs first, so they have to be the last into $refs.
+    # But if we check for less significant refs first then if we have multiple refs to the same
+    # resource (e.g., same issue, but it's mentioned in the description of a pull that also closes
+    # the issue) we will skip the more significant refs and end up visiting the least significant
+    # one. So we check in priority order and then add to $refs in reverse order.
+    to_add=()
+    push_refs to_add "$depth" < <(find_issues_closed_by_pr "$url")
+    push_refs to_add "$depth" < <(extract_refs_from_body_html "$ref")
+    push_refs to_add "$depth" < <(find_cross_refs "$url")
+    for ((i=${#to_add[@]}-1; i >= 0; i--)); do
+      refs+=("${to_add[$i]}")
+    done
+  done
+}
+
+find_commit_prs() {
+  local owner="$1" sha="$2"
+  local query="org:${owner} ${sha}"
+  gh api graphql -F searchQuery="$query" -f query='
+    query($searchQuery: String!) {
+      search(query: $searchQuery, type: ISSUE, first: 100) {
+        nodes {
+          ... on PullRequest { url, title, bodyHTML }
+        }
+      }
+    }
+  ' | jq --compact-output '.data.search.nodes[] | . + {depth: 0, rel: "in"}'
+}
+
+init_from_url() {
+  local url="$1"
+  fetch_refs <<<"$url" \
+    | jq --compact-output '. + {depth: 0, rel: "start"}'
+}
+
+find_issues_closed_by_pr() {
+  local url="$1"
+  if ! grep --quiet '/pull/' <<<"$url"; then return; fi
+  gh api graphql -F url="$url" -f query='
+    query($url: URI!) {
+      resource(url: $url) {
+        ... on PullRequest {
+          closingIssuesReferences (first: 100) {
+            edges {
+              node { url, title, bodyHTML }
+            }
+          }
+        }
+      }
+    }
+  ' \
+    | jq --compact-output '
+      .data.resource.closingIssuesReferences.edges[].node + {rel: "closes"}
+    '
+}
+
+extract_refs_from_body_html() {
+  local json="$1"
+  jq -r '.bodyHTML' <<<"$json" \
+    | perl -ne 'm{href="(https://github.com/iFixit/[^/]+/(pull|issues)/[^"]+)}g and print "$1\n"' \
+    | cat -n | sort -k2 -u | sort -n | awk '{print $2}' \
+    | fetch_refs \
+    | jq --compact-output '. + {rel: "mentions"}'
+}
+
+fetch_refs() {
+  while read url; do
+    gh api graphql -F url="$url" -f query='
+      query($url: URI!) {
+        resource(url: $url) {
+          ... on Issue { url, title, bodyHTML }
+          ... on PullRequest { url, title, bodyHTML }
+        }
+      }
+    ' | jq --compact-output --arg url "$url" '.data.resource + {url: $url}'
+  done
+}
+
+find_cross_refs() {
+  local url="$1"
+  gh api graphql -F url="$url" -f query='
+    query($url: URI!) {
+      resource(url: $url) {
+        ... on PullRequest {
+          timelineItems(itemTypes: [CROSS_REFERENCED_EVENT], first: 100) {
+            nodes {
+              ... on CrossReferencedEvent {
+                source {
+                  ... on Issue { url, title, bodyHTML }
+                  ... on PullRequest { url, title, bodyHTML }
+                }
+              }
+            }
+          }
+        }
+        ... on Issue {
+          timelineItems(itemTypes: [CROSS_REFERENCED_EVENT], first: 100) {
+            nodes {
+              ... on CrossReferencedEvent {
+                source {
+                  ... on Issue { url, title, bodyHTML }
+                  ... on PullRequest { url, title, bodyHTML }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ' \
+      | jq --compact-output '
+        (.data.resource.timelineItems.nodes // [])[].source + {rel: "referenced"}
+      '
+}
+
+push_refs() {
+  local -n stack="$1"
+  local depth="$2"
+  while read -r json; do
+    if already_seen "$json"; then continue; fi
+    json=$(jq --argjson d "$depth" '. + {depth: ($d+1)}' <<<"$json")
+    stack+=("$json")
+    add_url_to_seen "$json"
+  done < <(tac)
+}
+
+tac() {
+  sed '1!G;h;$!d'
+}
+
+add_url_to_seen() {
+  local json="$1"
+  jq -r '.url' <<<"$json" >>"$seen"
+}
+
+already_seen() {
+  local json="$1" url=
+  url=$(jq -r .url <<<"$json")
+  grep --quiet --fixed-strings "$url" "$seen"
+}
+
+output() {
+  local json="$1" depth= indent= rel= url= title= title_max_len= title_trunc=
+  if [ -n "$output_json" ]; then
+    jq 'del(.bodyHTML)' <<<"$json"
+  else
+    depth=$(jq -r '.depth' <<<"$json")
+    indent=$(build_indent "$depth")
+    rel=$(make_short_rel "$json")
+    url=$(jq -r '.url' <<<"$json")
+    title=$(jq -r '.title' <<<"$json")
+    title_max_len=$((cols - (${#indent} + 4 + ${#url} + 1)))
+    title_trunc=$(truncate_middle "$title" $title_max_len)
+    echo "${indent}[$(color_green $rel)] $(color_blue $url) ${title_trunc}"
+  fi
+}
+
+build_indent() {
+  local depth="$1" indent=0 pending_depth=
+  for ref in "${refs[@]}"; do
+    pending_depth=$(jq -r .depth <<<"$ref")
+    if ((pending_depth == indent)); then continue; fi
+    for (( ; indent < pending_depth - 1; indent++)); do
+      echo -n "   "
+    done
+    if ((pending_depth < depth)); then
+      echo -n " │ "
+    else
+      echo -n " ├─"
+    fi
+    let 'indent += 1'
+  done
+  for (( ; indent < depth - 1; indent++)); do
+    echo -n "   "
+  done
+  if ((indent < depth)); then
+    echo -n " └─"
+  fi
+}
+
+make_short_rel() {
+  case "$(jq -r '.rel' <<<"$1")" in
+    in)         echo "p" ;;
+    start)      echo "s" ;;
+    closes)     echo "c" ;;
+    mentions)   echo "m" ;;
+    referenced) echo "r" ;;
+  esac
+}
+
+truncate_middle() {
+  local string="$1" max_length="$2" ellipsis="…"
+  local half_length= first_part= second_part=
+  if [ ${#string} -le $max_length ]; then
+    echo "$string" && return
+  fi
+  local half_length=$(( max_length / 2 ))
+  local first_part="${string:0:$half_length}"
+  local second_part="${string: -$((max_length - half_length - 1))}"
+  echo "${first_part}${ellipsis}${second_part}"
+}
+
+color_blue() {
+  echo -e "\e[34m${1}\e[0m"
+}
+
+color_green() {
+  echo -e "\e[32m${1}\e[0m"
+}
+
+print_help() {
+  sed -nE -e '/^#:/ {s/#: ?//; p}' "${BASH_SOURCE[0]}"
+}
+
+main "$@"
