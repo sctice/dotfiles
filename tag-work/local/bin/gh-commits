@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+#: Usage: gh-commits [-p] PR_URL
+#:
+#: -p --patch  Generate patches
+main() {
+  local patch=
+
+  local shortopts=hp
+  local longopts=help,patch
+  TEMP=$(getopt -o $shortopts --long $longopts -n gh-issues -- "$@")
+  if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
+
+  eval set -- "$TEMP"
+  while true; do
+    case "$1" in
+      -h | --help) print_help; exit; shift ;;
+      -p | --patch) patch="--patch"; shift ;;
+      --) shift; break ;;
+      *) echo "error parsing options"; exit 1 ;;
+    esac
+  done
+
+  if [ $# -ne 1 ]; then
+    echo "gh-commits: missing PR URL"
+    print_help && exit 1
+  fi
+
+  local pr="$1"
+
+  local commits=$(gh pr view $pr --json commits -q '.commits[].oid')
+
+  if [ -z "$commits" ]; then
+    echo "gh-commits: no commits found"
+    return 2
+  fi
+
+  git fetch origin $(gh pr view $pr --json headRefName -q .headRefName) >/dev/null 2>&1 
+
+  local sep=
+  for commit in $commits; do
+    echo -ne "$sep"
+    git log --color=always -1 $patch $commit
+    sep="\n"
+  done | $(git config --get core.pager)
+}
+
+print_help() {
+  sed -nE -e '/^#:/ {s/#: ?//; p}' "${BASH_SOURCE[0]}"
+}
+
+main "$@"
