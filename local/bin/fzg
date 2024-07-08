@@ -8,9 +8,9 @@ set -euo pipefail
 #: selected commit. Any arguments are passed through to the initial `git log`.
 main() {
   local log_line
-  log_line=$(git_log "$@" | user_filter)
-  if [ -n "$log_line" ]; then
-    show_log_line <<<"$log_line"
+  selected_line=$(git_log "$@" | user_filter)
+  if [ -n "$selected_line" ]; then
+    git log -p $(awk '{print $1}' <<<"$selected_line")
   fi
 }
 
@@ -24,11 +24,7 @@ git_log() {
 
 user_filter() {
   fzf --ansi --no-mouse \
-    --preview='bash -c "echo {} | cut -d\" \" -f1 | xargs git log --color=always -1 -p"' 
-}
-
-show_log_line() {
-  git log -p $(cut -d' ' -f1)
+    --preview='bash -c "echo {1} | xargs git log --color=always -1 -p"' 
 }
 
 main "$@"
