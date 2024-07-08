@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
-#: Usage: gh-commits [-p] PR_URL
+#: Usage: gh-commits [-p|-f] PR_URL
 #:
 #: -p --patch  Generate patches
+#: -f --fzf    Browse commits in fzf (mutually exclusive with -p)
 main() {
-  local patch=
+  local patch= browse_in_fzf=
 
-  local shortopts=hp
-  local longopts=help,patch
+  local shortopts=hpf
+  local longopts=help,patch,fzf
   TEMP=$(getopt -o $shortopts --long $longopts -n gh-issues -- "$@")
   if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
 
@@ -16,6 +17,7 @@ main() {
     case "$1" in
       -h | --help) print_help; exit; shift ;;
       -p | --patch) patch="--patch"; shift ;;
+      -f | --fzf) browse_in_fzf=1; shift ;;
       --) shift; break ;;
       *) echo "error parsing options"; exit 1 ;;
     esac
@@ -37,6 +39,41 @@ main() {
 
   git fetch origin $(gh pr view $pr --json headRefName -q .headRefName) >/dev/null 2>&1 
 
+  if [ -n "$browse_in_fzf" ]; then
+    browse_commits_in_fzf "$commits"
+  else
+    page_commits "$commits"
+  fi
+}
+
+browse_commits_in_fzf() {
+  local commits="$1" log_line=
+  selected_line=$(browse_commits "$commits")
+  if [ -n "$selected_line" ]; then
+    git log -p $(awk '{print $1}' <<<$selected_line)
+  fi
+}
+
+browse_commits() {
+  for commit in $commits; do
+    git_log_oneline $commit
+  done | user_filter
+}
+
+git_log_oneline() {
+  git log \
+    -1 \
+    --color=always \
+    --pretty=format:'%Cgreen%h%Creset %<(20,mtrunc)%aE %<(15)%Cblue%ch%Creset %s%n' \
+    "$@"
+}
+
+user_filter() {
+  fzf --ansi --no-mouse \
+    --preview="bash -c \"echo {1} | xargs git log --color=always -1 -p\""
+}
+
+page_commits() {
   local sep=
   for commit in $commits; do
     echo -ne "$sep"
