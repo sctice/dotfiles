@@ -46,7 +46,6 @@ _get_active_port() {
 # identifier and before the port metadata provided in parentheses.
 _get_port_label() {
   local active_port="$1"
-  echo "$active_port" >active_port
   perl -nle '/^\s*'"$active_port"': (.*) \(/i && print $1'
 }
 
