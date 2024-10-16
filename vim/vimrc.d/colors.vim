@@ -56,4 +56,4 @@ if has('termguicolors')
   set termguicolors
 endif
 
-colorscheme brogrammer
+colorscheme monokai-soda

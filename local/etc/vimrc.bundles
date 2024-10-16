@@ -33,6 +33,8 @@ Plugin 'yssl/QFEnter'
 
 " Color schemes.
 
+Plugin 'tjdevries/colorbuddy.vim'
+Plugin 'sctice/monokai-soda.vim'
 Plugin 'marciomazza/vim-brogrammer-theme'
 
 " Language-specific plugins.
