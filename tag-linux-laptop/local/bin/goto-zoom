@@ -5,7 +5,7 @@
 # system default (although maybe that's silly since we're only looking for
 # gnome terminal windows to switch to).
 
-TARGET_NAME="Zoom Meeting"
+TARGET_NAME="zoom.zoom[[:space:]]+.*Meeting"
 
 function main() {
   winids=$(list_windows $TARGET_NAME)
@@ -19,7 +19,7 @@ function main() {
 
 function list_windows() {
   name="$1"
-  wmctrl -l | awk "/$name/ {print \$1}"
+  wmctrl -lx | awk "/$name/ {print \$1}"
 }
 
 function select_most_recent() {
