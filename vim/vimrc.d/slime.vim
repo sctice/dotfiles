@@ -1,7 +1,7 @@
 " Slime, for interacting with REPLs.
 
 " Use the native vim terminal for the REPL.
-let g:slime_target = "vimterminal"
+let g:slime_target = "neovim"
 
 " Make use of IPython's %cpaste magic function to allow for robust pasting to
 " overcome subtle whitespace issues.
