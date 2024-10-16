@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# Timezones to display
+TIMEZONES=(
+  "America/Los_Angeles"
+  "America/Phoenix"
+  "America/Chicago"
+  "America/New_York"
+  "UTC"
+  "Europe/Paris"
+  "Asia/Kolkata"
+  "Asia/Shanghai"
+  "Pacific/Port_Moresby"
+)
+
+main() {
+  timestamp=@$(date +"%s" --date="${1:-now}")
+
+  # Add the current timezone if it's not already in the list
+  local_tz=$(find_local_tz)
+  local_offset_second=$(calc_tz_offset "$local_tz")
+  if [[ ! -z "$local_tz" && ! "${TIMEZONES[@]}" =~ "$local_tz" ]]; then
+    TIMEZONES+=("$local_tz")
+  fi
+
+  # Collect timezone offsets and find the maximum timezone name length
+  lines=""
+  max_tz_length=0
+  for timezone in "${TIMEZONES[@]}"; do
+    offset_seconds=$(calc_tz_offset "$timezone")
+    offset_from_local=$((offset_seconds - local_offset_second))
+    lines+="$offset_seconds $offset_from_local $timezone"$'\n'
+
+    tz_len=${#timezone}
+    if [ $tz_len -gt $max_tz_length ]; then
+      max_tz_length=$tz_len
+    fi
+  done
+
+  # Sort the timezones by their offsets
+  sorted_lines=$(echo -n "$lines" | sort -n)
+
+  red='\033[0;31m'
+  yellow='\033[0;33m'
+  green='\033[0;32m'
+  nc='\033[0m'
+
+  display "$timestamp" "$max_tz_length" "$local_tz" <<<"$sorted_lines"
+}
+
+display() {
+  local timestamp="$1" max_tz_length="$2" local_tz="$3" current_day=
+
+  current_day=$(date "+%Y-%m-%d" --date=$timestamp)
+
+  while read -r offset local_offset timezone; do
+    date_time=$(TZ=$timezone date '+%Y-%m-%d %H:%M:%S%z' --date=$timestamp)
+    timezone_code=$(TZ=$timezone date '+%Z')
+    day=$(TZ=$timezone date '+%Y-%m-%d' --date=$timestamp)
+    local_offset=$(format_local_offset "$local_offset")
+
+    if [[ "$timezone" = "$local_tz" ]]; then
+      color=$green
+    elif [[ "$day" < "$current_day" ]]; then
+      color=$yellow
+    elif [[ "$day" > "$current_day" ]]; then
+      color=$red
+    else
+      color=$nc
+    fi
+
+    printf -v padded_tz "%-${max_tz_length}s" "$timezone"
+    printf -v padded_tz_code "%-4s" "$timezone_code"
+    echo -e "${color}${padded_tz} ${date_time} ${padded_tz_code} ${local_offset}${nc}"
+  done
+}
+
+calc_tz_offset() {
+  timezone="$1"
+  offset_str=$(TZ=$timezone date +%z)
+  offset_sign=${offset_str:0:1}
+  offset_hours=${offset_str:1:2}
+  offset_minutes=${offset_str:3:2}
+  offset_total_seconds=$((10#$offset_hours * 3600 + 10#$offset_minutes * 60))
+  if [ "$offset_sign" == "-" ]; then
+    offset_total_seconds=$((-1 * offset_total_seconds))
+  fi
+  echo $offset_total_seconds
+}
+
+find_local_tz() {
+  # Get the Olson database name
+  timedatectl show --property=Timezone | cut -d= -f2
+}
+
+format_local_offset() {
+  local local_offset="$1"
+  local_offset=$(echo "scale=2; $local_offset / 3600" | bc)
+  if [ ${local_offset:0:1} != "-" ]; then
+    local_offset="+${local_offset}"
+  fi
+  sed -Ee 's/\.0+$//; s/\.([^0])0+$/.\1/' <<<"$local_offset"
+}
+
+main "$@"
