@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+NAME=toggle-headset-profile
+BT_CARD="bluez_card.98_47_44_80_83_61"
+BT_INPUT="bluez_input.98_47_44_80_83_61"
+
+main() {
+  local card_section current_profile
+
+  card_section=$(list_cards | get_card_section)
+  if [ -z "$card_section" ]; then
+    warn "$BT_CARD not found."
+    exit 1
+  fi
+
+  current_profile=$(get_active_profile <<<"$card_section")
+  toggle_profile "$current_profile"
+}
+
+list_cards() {
+  pactl list cards
+}
+
+# Extract the section corresponding to the Bluetooth card.
+get_card_section() {
+  awk -v card="$BT_CARD" '/Name:/{p=0} /Name: '"$BT_CARD"'/{p=1} p'
+}
+
+get_active_profile() {
+  awk '/Active Profile:/ {print $3}'
+}
+
+# Toggle the profile; if we don't recognize the current profile, default to the headset (with mic).
+toggle_profile() {
+  local current_profile="$1"
+  if [[ "$current_profile" =~ "headset-head-unit" ]]; then
+    log "new profile: a2dp-sink-sbc_xq"
+    pactl set-card-profile "$BT_CARD" a2dp-sink-sbc_xq
+  else
+    log "new profile: headset-head-unit"
+    pactl set-card-profile "$BT_CARD" headset-head-unit
+    set_input_source_to_headset
+  fi
+}
+
+set_input_source_to_headset() {
+  local source_name=$(pactl list short sources | grep "$BT_INPUT" | awk '{print $2}')
+  if [ -n "$source_name" ]; then
+    log "new input source: $source_name"
+    pactl set-default-source "$source_name"
+  else
+    warn "failed to change default input source"
+  fi
+}
+
+log() { echo "$NAME: $1"; }
+warn() { log "$1" 1>&2; }
+
+main "$@"
