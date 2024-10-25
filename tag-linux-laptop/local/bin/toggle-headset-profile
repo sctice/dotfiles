@@ -5,9 +5,18 @@ set -euo pipefail
 NAME=toggle-headset-profile
 BT_CARD="bluez_card.98_47_44_80_83_61"
 BT_INPUT="bluez_input.98_47_44_80_83_61"
+HEADSET_PROFILE=headset-head-unit-msbc
+A2DP_PROFILE=a2dp-sink-sbc_xq
 
+gui_mode=false
+
+#: Usage: toggle-headset-profile [-g]
+#:
+#: -g --gui  Display a gui with the current profile and ability to change it
 main() {
-  local card_section current_profile
+  parse_args "$@"
+
+  local card_section current_profile available_profiles
 
   card_section=$(list_cards | get_card_section)
   if [ -z "$card_section" ]; then
@@ -16,7 +25,30 @@ main() {
   fi
 
   current_profile=$(get_active_profile <<<"$card_section")
-  toggle_profile "$current_profile"
+  available_profiles=($A2DP_PROFILE $HEADSET_PROFILE)
+
+  if [ "$gui_mode" = true ]; then
+    handle_gui "$current_profile" "${available_profiles[@]}"
+  else
+    toggle_profile "$current_profile"
+  fi
+}
+
+parse_args() {
+  local shortopts=hg
+  local longopts=help,gui
+  TEMP=$(getopt -o $shortopts --long $longopts -n "$NAME" -- "$@")
+  if [ $? != 0 ]; then echo "failed to parse options" >&2; exit 1; fi
+
+  eval set -- "$TEMP"
+  while true; do
+    case "$1" in
+      -h | --help) print_help; exit; shift ;;
+      -g | --gui) gui_mode=true; shift ;;
+      --) shift; break ;;
+      *) echo "error parsing options"; exit 1 ;;
+    esac
+  done
 }
 
 list_cards() {
@@ -32,30 +64,83 @@ get_active_profile() {
   awk '/Active Profile:/ {print $3}'
 }
 
+# Handle the graphical user interface with zenity
+handle_gui() {
+  local current_profile="$1"; shift
+  local profiles=("$@")
+  local selected_profile= output=
+
+  selected_profile=$(zenity --list \
+    --title="Select Profile" \
+    --text="Select a profile:" \
+    --radiolist \
+    --column="Select" --column="Profile" \
+    $(for profile in "${profiles[@]}"; do \
+      if [ "$profile" = "$current_profile" ]; then echo TRUE "$profile"; else echo FALSE "$profile"; fi; done) \
+    --ok-label="Save" --cancel-label="Cancel")
+
+  if [ -n "$selected_profile" ] && [ "$current_profile" != "$selected_profile" ]; then
+    output=$(set_profile "$selected_profile") || {
+      zenity --error --text="$output"
+      return 1
+    }
+  fi
+}
+
 # Toggle the profile; if we don't recognize the current profile, default to the headset (with mic).
 toggle_profile() {
-  local current_profile="$1"
-  if [[ "$current_profile" =~ "headset-head-unit" ]]; then
-    log "new profile: a2dp-sink-sbc_xq"
-    pactl set-card-profile "$BT_CARD" a2dp-sink-sbc_xq
+  local current_profile="$1" profile= output=
+  if [ "$current_profile" = "$HEADSET_PROFILE" ]; then
+    profile="$A2DP_PROFILE"
   else
-    log "new profile: headset-head-unit"
-    pactl set-card-profile "$BT_CARD" headset-head-unit
-    set_input_source_to_headset
+    profile="$HEADSET_PROFILE"
+  fi
+
+  output=$(set_profile "$profile") || {
+    warn "$output"
+    return 1
+  }
+  log "$output"
+}
+
+# Set the given profile
+set_profile() {
+  local new_profile="$1"
+  local set_profile_output= set_input_source_output=
+
+  echo -n "Setting profile to $new_profile… "
+  set_profile_output=$(pactl set-card-profile "$BT_CARD" "$new_profile" 2>&1) || {
+    echo "$set_profile_output"
+    return 1
+  }
+  echo "Done"
+
+  if [ "$new_profile" = "$HEADSET_PROFILE" ]; then
+    echo -n "Setting default input… "
+    set_input_source_output=$(set_input_source_to_headset) || {
+      echo "$set_input_source_output"
+      return 1
+    }
+    echo "Done"
   fi
 }
 
 set_input_source_to_headset() {
   local source_name=$(pactl list short sources | grep "$BT_INPUT" | awk '{print $2}')
   if [ -n "$source_name" ]; then
-    log "new input source: $source_name"
+    echo "$source_name"
     pactl set-default-source "$source_name"
   else
-    warn "failed to change default input source"
+    echo "No input source for headset"
+    return 1
   fi
 }
 
-log() { echo "$NAME: $1"; }
+print_help() {
+  sed -nE -e '/^#:/ {s/#: ?//; p}' "${BASH_SOURCE[0]}"
+}
+
+log() { echo "$1"; }
 warn() { log "$1" 1>&2; }
 
 main "$@"
