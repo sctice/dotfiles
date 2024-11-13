@@ -1,37 +1,99 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env ruby
 
-birthdate <- as.Date("1983-09-12")
-life_exp_mean <- 80
-life_exp_sd <- 15.25
+require 'date'
+require 'optparse'
 
-age_years <- as.numeric(difftime(Sys.Date(), birthdate, units = "days") / 365.25)
-quantiles <- c(.01, .25, .5, .75, .95)
-exp_age <- qnorm(quantiles, life_exp_mean, life_exp_sd)
-
-printTimeLeft <- function(age_years, exp_age, show_progress) {
-  pct_dead <- age_years / exp_age
-  pct_dead_int <- round(pct_dead * 100)
-  years_left <- exp_age - age_years
-  cat(sprintf(
-      "%5.2f years left, %d%% dead ",
-      years_left,
-      round(pct_dead_int)
-  ))
-  if (show_progress) {
-    system(paste("progress -n", pct_dead_int))
+# https://www.cdc.gov/nchs/nvss/life-expectancy.htm#data
+PROBABILITIES = {
+  white: {
+    male:   [0.004675, 0.000401, 0.000273, 0.000228, 0.000166, 0.000156, 0.000140, 0.000127, 0.000114, 0.000102, 0.000098, 0.000112, 0.000154, 0.000232, 0.000337, 0.000454, 0.000575, 0.000700, 0.000829, 0.000962, 0.001102, 0.001248, 0.001390, 0.001522, 0.001648, 0.001770, 0.001894, 0.002025, 0.002163, 0.002305, 0.002447, 0.002584, 0.002708, 0.002818, 0.002921, 0.003027, 0.003140, 0.003259, 0.003385, 0.003522, 0.003683, 0.003861, 0.004042, 0.004221, 0.004414, 0.004647, 0.004936, 0.005276, 0.005654, 0.006057, 0.006467, 0.006912, 0.007429, 0.008045, 0.008748, 0.009472, 0.010213, 0.011033, 0.011935, 0.012891, 0.013890, 0.014889, 0.015853, 0.016788, 0.017746, 0.018771, 0.020074, 0.021440, 0.022987, 0.024626, 0.026262, 0.028129, 0.030344, 0.033075, 0.035690, 0.040445, 0.044157, 0.049028, 0.053414, 0.059387, 0.064619, 0.071103, 0.078135, 0.086198, 0.096029, 0.104962, 0.117575, 0.131350, 0.146308, 0.162453, 0.179764, 0.198194, 0.217669, 0.238086, 0.259311, 0.281187, 0.303534, 0.326154, 0.348840, 0.371383, 1.000000],
+    female: [0.004060, 0.000295, 0.000172, 0.000117, 0.000095, 0.000092, 0.000084, 0.000078, 0.000073, 0.000069, 0.000069, 0.000077, 0.000096, 0.000129, 0.000174, 0.000224, 0.000275, 0.000324, 0.000370, 0.000414, 0.000462, 0.000514, 0.000567, 0.000619, 0.000672, 0.000724, 0.000782, 0.000850, 0.000931, 0.001020, 0.001111, 0.001201, 0.001289, 0.001376, 0.001463, 0.001557, 0.001657, 0.001759, 0.001863, 0.001971, 0.002093, 0.002228, 0.002366, 0.002504, 0.002652, 0.002827, 0.003034, 0.003261, 0.003495, 0.003734, 0.003980, 0.004251, 0.004565, 0.004934, 0.005352, 0.005779, 0.006220, 0.006721, 0.007291, 0.007906, 0.008568, 0.009233, 0.009861, 0.010445, 0.011033, 0.011654, 0.012446, 0.013373, 0.014496, 0.015818, 0.017156, 0.018683, 0.020390, 0.022486, 0.024578, 0.028072, 0.031177, 0.034821, 0.038238, 0.042388, 0.046834, 0.051479, 0.057258, 0.063707, 0.071541, 0.080280, 0.088925, 0.100054, 0.112305, 0.125724, 0.140340, 0.156164, 0.173186, 0.191367, 0.210642, 0.230916, 0.252063, 0.273928, 0.296335, 0.319085, 1.000000],
+  },
+  hispanic: {
+    male:   [0.005120, 0.000304, 0.000198, 0.000155, 0.000144, 0.000121, 0.000115, 0.000107, 0.000094, 0.000079, 0.000069, 0.000078, 0.000120, 0.000204, 0.000323, 0.000460, 0.000600, 0.000747, 0.000893, 0.001041, 0.001197, 0.001361, 0.001520, 0.001669, 0.001804, 0.001937, 0.002065, 0.002177, 0.002267, 0.002343, 0.002412, 0.002484, 0.002558, 0.002639, 0.002727, 0.002815, 0.002909, 0.003022, 0.003162, 0.003324, 0.003507, 0.003698, 0.003885, 0.004064, 0.004244, 0.004440, 0.004672, 0.004952, 0.005290, 0.005680, 0.006097, 0.006546, 0.007056, 0.007645, 0.008306, 0.009015, 0.009762, 0.010562, 0.011422, 0.012345, 0.013356, 0.014431, 0.015522, 0.016601, 0.017689, 0.018858, 0.020146, 0.021501, 0.022893, 0.024322, 0.025805, 0.027409, 0.029217, 0.031359, 0.033913, 0.036911, 0.040358, 0.044334, 0.048321, 0.053203, 0.057978, 0.064010, 0.070081, 0.077023, 0.085469, 0.093127, 0.103924, 0.115699, 0.128479, 0.142274, 0.157078, 0.172864, 0.189585, 0.207169, 0.225522, 0.244527, 0.264045, 0.283922, 0.303989, 0.324071, 1.000000],
+    female: [0.004476, 0.000281, 0.000238, 0.000152, 0.000132, 0.000111, 0.000095, 0.000086, 0.000082, 0.000084, 0.000091, 0.000105, 0.000125, 0.000155, 0.000192, 0.000233, 0.000277, 0.000325, 0.000378, 0.000434, 0.000496, 0.000559, 0.000606, 0.000630, 0.000638, 0.000638, 0.000645, 0.000666, 0.000708, 0.000767, 0.000835, 0.000899, 0.000956, 0.001001, 0.001038, 0.001078, 0.001127, 0.001183, 0.001249, 0.001325, 0.001403, 0.001493, 0.001610, 0.001766, 0.001953, 0.002166, 0.002385, 0.002594, 0.002780, 0.002956, 0.003138, 0.003352, 0.003610, 0.003923, 0.004287, 0.004671, 0.005077, 0.005539, 0.006074, 0.006677, 0.007357, 0.008070, 0.008757, 0.009373, 0.009947, 0.010537, 0.011220, 0.012028, 0.013010, 0.014158, 0.015430, 0.016804, 0.018334, 0.020062, 0.022039, 0.024330, 0.026988, 0.030039, 0.033190, 0.036811, 0.040839, 0.045249, 0.050427, 0.056221, 0.063280, 0.071180, 0.079022, 0.089153, 0.100350, 0.112667, 0.126142, 0.140800, 0.156643, 0.173651, 0.191776, 0.210941, 0.231041, 0.251938, 0.273471, 0.295455, 1.000000],
   }
 }
 
-for (i in 1:length(quantiles)) {
-  q <- round(quantiles[i] * 100) 
-  cat(sprintf("q%-2d: ", q))
-  printTimeLeft(age_years, exp_age[i], show_progress = (i == 1 || i == length(quantiles)))
-  cat("\n")
-}
+MY_BIRTHDATE = "1983-09-12"
 
-cat("\nToday's random simulation\n")
-q <- runif(1)
-random_age <- qnorm(q, life_exp_mean, life_exp_sd)
-cat(sprintf("q%-2d: ", round(q * 100)))
-printTimeLeft(age_years, random_age, show_progress = TRUE)
-cat("\n")
+def main
+  options = { age: nil, birthdate: MY_BIRTHDATE, ethnicity: :white, sex: :male }
+  OptionParser.new do |opts|
+    opts.on("-bBIRTHDATE", "--birthdate=BIRTHDATE", "Birthdate (YYYY-mm-dd)") do |b|
+      options[:birthdate] = b
+    end
+    opts.on("-aAGE", "--age=AGE", Integer, "Age") { |a| options[:age] = [0, a].max }
+    opts.on("--white", "White (default)") { options[:ethnicity] = :white }
+    opts.on("--hispanic", "Hispanic") { options[:ethnicity] = :hispanic }
+    opts.on("-m", "--male", "Male (default)") { options[:sex] = :male }
+    opts.on("-f", "--female", "Female") { options[:sex] = :female }
+  end.parse!
+
+  begin
+    age = options[:age] || compute_age(options[:birthdate])
+  rescue Date::Error
+    $stderr.puts "Invalid birthdate: #{options[:birthdate]}"
+    exit 1
+  end
+  ethnicity = options[:ethnicity]
+  sex = options[:sex]
+
+  ps = PROBABILITIES[ethnicity][sex]
+
+  puts "Now: #{age}yo #{ethnicity} #{sex}\n\n"
+
+  percentiles = percentiles(age, ps, [5, 25, 50, 75, 95])
+  display_percentiles(age, percentiles)
+
+  puts "\nThis could be you:\n\n"
+  percentiles = percentiles(age, ps, [rand(1..99)])
+  display_percentiles(age, percentiles)
+end
+
+def compute_age(birthdate)
+  birthdate = Date.parse(birthdate)
+  today = Date.today
+  age = today.year - birthdate.year
+  age -= 1 if today < birthdate + age
+  age
+end
+
+def percentiles(age, probabilities, percentile_array)
+  percentiles = percentile_array.map { |p| [p, nil] }.to_h
+  p_made_it_this_far = 1.0
+  cumulative_p_dead = 0.0
+
+  (age...probabilities.size).each do |i|
+    p_stop_here = probabilities[i]
+    p_dead = p_made_it_this_far * p_stop_here
+    p_made_it_this_far *= (1.0 - p_stop_here)
+    cumulative_p_dead += p_dead
+    percentiles.keys.each do |p|
+      percentiles[p] = i if percentiles[p].nil? && cumulative_p_dead >= p / 100.0
+    end
+    break if percentiles.values.all?
+  end
+
+  percentiles
+end
+
+def display_percentiles(current_age, percentiles)
+  age_pad = percentiles.values.map { |age| age.to_s.length }.max
+  years_remaining_pad = percentiles.values.map { |age| (age ? age - current_age : 0).to_s.length }.max
+  percentiles.each do |percentile, age|
+    remaining_years = age ? age - current_age : nil
+    if remaining_years && remaining_years > 0
+      formatted_age = age.to_s.rjust(age_pad)
+      formatted_years = remaining_years.to_s.rjust(years_remaining_pad)
+      plural = remaining_years > 1 ? 's' : ''
+      outcome = "live to #{formatted_age}, #{formatted_years} more year#{plural}"
+    else
+      outcome = '💀'
+    end
+    formatted_percentile = "q#{percentile}".rjust(3)
+    puts "#{formatted_percentile}: #{outcome}"
+  end
+end
+
+main if __FILE__ == $0
