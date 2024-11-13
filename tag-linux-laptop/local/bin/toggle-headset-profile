@@ -3,6 +3,7 @@
 set -euo pipefail
 
 NAME=toggle-headset-profile
+BT_ID="98:47:44:80:83:61"
 BT_CARD="bluez_card.98_47_44_80_83_61"
 BT_INPUT="bluez_input.98_47_44_80_83_61"
 HEADSET_PROFILE=headset-head-unit-msbc
@@ -64,24 +65,21 @@ get_active_profile() {
   awk '/Active Profile:/ {print $3}'
 }
 
-# Handle the graphical user interface with zenity
+# Handle the graphical user interface with rofi
 handle_gui() {
   local current_profile="$1"; shift
   local profiles=("$@")
   local selected_profile= output=
 
-  selected_profile=$(zenity --list \
-    --title="Select Profile" \
-    --text="Select a profile:" \
-    --radiolist \
-    --column="Select" --column="Profile" \
-    $(for profile in "${profiles[@]}"; do \
-      if [ "$profile" = "$current_profile" ]; then echo TRUE "$profile"; else echo FALSE "$profile"; fi; done) \
-    --ok-label="Save" --cancel-label="Cancel")
+  for i in "${!profiles[@]}"; do
+    [ "${profiles[$i]}" = "$current_profile" ] && break;
+  done
+  selected_profile=$(printf "%s\n" "${profiles[@]}" |
+    rofi -dmenu -p "Select Profile" -no-custom -selected-row "$i" -a "$i")
 
   if [ -n "$selected_profile" ] && [ "$current_profile" != "$selected_profile" ]; then
     output=$(set_profile "$selected_profile") || {
-      zenity --error --text="$output"
+      warn "$output"
       return 1
     }
   fi
@@ -109,10 +107,9 @@ set_profile() {
   local set_profile_output= set_input_source_output=
 
   echo -n "Setting profile to $new_profile… "
-  set_profile_output=$(pactl set-card-profile "$BT_CARD" "$new_profile" 2>&1) || {
-    echo "$set_profile_output"
-    return 1
-  }
+  set_profile_output=$(pactl_set_card_profile "$new_profile") \
+    || { reconnect_bluetooth && set_profile_output=$(pactl_set_card_profile "$new_profile"); } \
+    || { echo "$set_profile_output"; return 1; }
   echo "Done"
 
   if [ "$new_profile" = "$HEADSET_PROFILE" ]; then
@@ -123,6 +120,15 @@ set_profile() {
     }
     echo "Done"
   fi
+}
+
+pactl_set_card_profile() {
+  local new_profile="$1"
+  pactl set-card-profile "$BT_CARD" "$new_profile" 2>&1
+}
+
+reconnect_bluetooth() {
+  bluetoothctl disconnect $BT_ID && bluetoothctl connect $BT_ID
 }
 
 set_input_source_to_headset() {
@@ -140,7 +146,14 @@ print_help() {
   sed -nE -e '/^#:/ {s/#: ?//; p}' "${BASH_SOURCE[0]}"
 }
 
-log() { echo "$1"; }
+log() {
+  if [ "$gui_mode" = true ]; then
+    rofi -e "$1"
+  else
+    echo "$1";
+  fi
+}
+
 warn() { log "$1" 1>&2; }
 
 main "$@"
