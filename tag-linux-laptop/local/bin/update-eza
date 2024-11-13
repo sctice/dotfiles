@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# See https://sw.kovidgoyal.net/kitty/binary/
+
+set -euo pipefail
+set -x
+
+stow_dir="$HOME/.local/opt"
+eza_bin_dir="${stow_dir}/eza.app/bin"
+download_target="${eza_bin_dir}/eza"
+download_url=https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz
+
+cd $stow_dir
+mkdir -p "$eza_bin_dir"
+
+wget --no-verbose -c "$download_url" -O - | tar -C "$eza_bin_dir" -xz >"$download_target"
+chmod +x "$download_target"
+
+stow --restow eza.app

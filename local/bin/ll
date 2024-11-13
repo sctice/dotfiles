@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if hash exa 2>/dev/null; then
-  exec exa --long --group --color-scale --time-style=long-iso "$@"
+if hash eza 2>/dev/null; then
+  exec eza --long --group --color-scale --time-style=long-iso "$@"
 else
   exec ls -h --color=auto --time-style=long-iso -l "$@"
 fi
