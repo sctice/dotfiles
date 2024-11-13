@@ -82,6 +82,9 @@ fi
 
 # Aliases
 
-alias ssk='ssh-keygen'
+alias p='cd ..'
+alias pp='cd ../..'
+alias ppp='cd ../../..'
+alias pppp='cd ../../../..'
 
 # vim: sw=2 ts=2 sts=2 ft=bash
